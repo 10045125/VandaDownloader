@@ -1,0 +1,9 @@
+/*
+ * Copyright (C) 2005-2018 YY Inc. All rights reserved.
+ *  Description :settings.gradle
+ *
+ *  Creation    : 2018-08-23
+ *  Author      : wuzhonglianl@yy.com
+ */
+
+include ':app', ':vandadownloader'

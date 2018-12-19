@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2005-2018 YY Inc. All rights reserved.
+  ~  Description :ic_launcher_round.xml
+  ~
+  ~  Creation    : 2018-08-23
+  ~  Author      : wuzhonglianl@yy.com
+  -->
+
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@drawable/ic_launcher_background"/>
+    <foreground android:drawable="@drawable/ic_launcher_foreground"/>
+</adaptive-icon>
