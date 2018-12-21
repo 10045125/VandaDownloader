@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/ll_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context=".MainActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="60dp"
+        android:orientation="vertical">
+
+        <FrameLayout
+            android:id="@+id/rl"
+            android:layout_width="match_parent"
+            android:layout_height="26dp">
+
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"/>
+
+        </FrameLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/height_separator"
+            android:layout_gravity="center_vertical">
+
+            <io.victoralbertos.breadcumbs_view.BreadcrumbsView
+                android:id="@+id/breadcrumbs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                app:heightSeparator="@dimen/height_separator"
+                app:nextStepBorderDotColor="@color/colorNext"
+                app:nextStepFillDotColor="@color/colorNext"
+                app:nextStepSeparatorColor="@color/colorNext"
+                app:numberOfSteps="9"
+                app:radiusDot="@dimen/radius_dot"
+                app:sizeDotBorder="@dimen/size_dot_border"
+                app:visitedStepBorderDotColor="@color/colorVisited"
+                app:visitedStepFillDotColor="@color/colorVisited"
+                app:visitedStepSeparatorColor="@color/colorVisited" />
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:gravity="center_vertical"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/progress"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:textSize="@dimen/height_text_size" />
+
+                <TextView
+                    android:id="@+id/speed"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:layout_centerVertical="true"
+                    android:textSize="@dimen/height_text_size" />
+
+                <TextView
+                    android:id="@+id/time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:textSize="@dimen/height_text_size" />
+
+            </RelativeLayout>
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+    <!--<LinearLayout-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_alignParentBottom="true"-->
+        <!--android:orientation="horizontal"-->
+        <!--android:weightSum="2">-->
+
+        <!--<Button-->
+            <!--android:id="@+id/bt_prev"-->
+            <!--android:layout_width="0dp"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_weight="1"-->
+            <!--android:backgroundTint="@color/colorVisited"-->
+            <!--android:text="@string/prev"-->
+            <!--android:textColor="@color/colorWhite" />-->
+
+        <!--<Button-->
+            <!--android:id="@+id/bt_next"-->
+            <!--android:layout_width="0dp"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_weight="1"-->
+            <!--android:backgroundTint="@color/colorVisited"-->
+            <!--android:text="@string/next"-->
+            <!--android:textColor="@color/colorWhite" />-->
+
+    <!--</LinearLayout>-->
+
+
+</RelativeLayout>

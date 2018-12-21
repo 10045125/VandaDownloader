@@ -1,16 +1,21 @@
 package vanda.wzl.vandadownloader.io.file.separation
 
-import okio.BufferedSink
+import vanda.wzl.vandadownloader.DownloadListener
+import vanda.wzl.vandadownloader.ExeProgressCalc
 import vanda.wzl.vandadownloader.status.OnStatus
 
 
 interface WriteSeparation {
     fun onWriteSegmentBytesToStore()
     fun syncCurData()
-    fun quarkBufferSink(): BufferedSink
+    fun quarkBufferSink(): quarkokio.BufferedSink
     fun sofar(sofar: Long)
     fun total(total: Long)
     fun status(@OnStatus status: Int)
     fun id(id: Long)
+    fun threadId(id: Int)
+    fun exeProgressCalc(exeProgressCalc: ExeProgressCalc)
     fun time(time: Long)
+    fun segment(segment: Long)
+    fun downloadListener(downloadListener: DownloadListener)
 }

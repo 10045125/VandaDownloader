@@ -4,7 +4,6 @@ package vanda.wzl.vandadownloader.io.file.separation
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
-import vanda.wzl.vandadownloader.progress.ProgressSegment
 
 class HandlerSegment(looper: Looper) : Handler(looper) {
 
@@ -31,8 +30,8 @@ class HandlerSegment(looper: Looper) : Handler(looper) {
     }
 
     companion object {
-        internal val MSG_WRITE = 0x1101
-        internal val MSG_QIUT = 0x1102
+        internal val MSG_WRITE = 0x11011
+        internal val MSG_QIUT = 0x11022
     }
 
 }

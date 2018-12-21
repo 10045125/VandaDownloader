@@ -1,5 +1,6 @@
 package vanda.wzl.vandadownloader.io.file.io
 
+import android.util.Log
 import java.io.IOException
 import java.io.OutputStream
 import java.io.RandomAccessFile
@@ -16,17 +17,18 @@ import java.io.RandomAccessFile
  * @date 2017/06/28
  */
 
-class RandomAcessFileOutputStream(randomAccessFile: RandomAccessFile) : OutputStream() {
+class RandomAcessFileOutputStream : OutputStream() {
 
     private var mRandomAccessFile: RandomAccessFile? = null
 
-    init {
-        updateOutputStream(randomAccessFile)
+    fun updateOutputStream(randomAccessFile: RandomAccessFile, seek: Long): RandomAcessFileOutputStream {
+        mRandomAccessFile = randomAccessFile
+        mRandomAccessFile!!.seek(seek)
+        return this
     }
 
-    fun updateOutputStream(randomAccessFile: RandomAccessFile): RandomAcessFileOutputStream {
-        mRandomAccessFile = randomAccessFile
-        return this
+    fun filePointer(): Long {
+        return mRandomAccessFile!!.filePointer
     }
 
     @Throws(IOException::class)

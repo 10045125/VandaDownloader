@@ -6,4 +6,4 @@
  *  Author      : wuzhonglianl@yy.com
  */
 
-include ':app', ':vandadownloader'
+include ':app', ':vandadownloader', ':progresswidget'

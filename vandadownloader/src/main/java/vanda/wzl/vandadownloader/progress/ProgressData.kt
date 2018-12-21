@@ -1,5 +1,7 @@
 package vanda.wzl.vandadownloader.progress
 
+import vanda.wzl.vandadownloader.DownloadListener
+import vanda.wzl.vandadownloader.ExeProgressCalc
 import vanda.wzl.vandadownloader.status.OnStatus
 
 class ProgressData {
@@ -8,15 +10,31 @@ class ProgressData {
     var id: Long = 0
     var sofar: Long = 0
     var total: Long = 0
+    var segment: Long = 0
+    var threadId: Int = 0
+    var totalProgress: Long = 0
+    var speed: String = "0KB"
+    var percent = "0.00"
+    var percentChild = "0.00"
 
     @OnStatus
     var status: Int = 0
+
+    var exeProgressCalc: ExeProgressCalc? = null
+    var downloadListener: DownloadListener? = null
 
     private fun reset() {
         id = -1
         sofar = -1
         total = -1
         status = -1
+        threadId = 0
+        segment = 0
+        totalProgress = 0
+        speed = "0KB"
+        percent = "0.00"
+        percentChild = "0.00"
+        downloadListener = null
     }
 
     fun recycle() {

@@ -3,98 +3,76 @@ package vanda.vandadownloader
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.widget.TextView
-//import kotlinx.coroutines.experimental.*
-//import kotlinx.coroutines.experimental.android.Main
-//import kotlinx.coroutines.experimental.channels.ReceiveChannel
-//import kotlinx.coroutines.experimental.channels.produce
-//import kotlinx.coroutines.experimental.selects.select
-import vanda.wzl.vandadownloader.DownloadRunnable
+import io.victoralbertos.breadcumbs_view.BreadcrumbsView
+import vanda.wzl.vandadownloader.DownloadListener
+import vanda.wzl.vandadownloader.DownloadTaskSchedule
+import vanda.wzl.vandadownloader.util.SpeedUtils
 
-//import kotlin.coroutines.experimental.CoroutineContext
+class MainActivity : AppCompatActivity(), DownloadListener {
 
-class MainActivity : AppCompatActivity() {
+    private val url = "http://dlied5.myapp.com/myapp/1104466820/sgame/2017_com.tencent.tmgp.sgame_h177_1.42.1.6_a6157f.apk"
+//    private val url: String = "https://dldir1.qq.com/weixin/android/weixin673android1360.apk"
 
-    private val url: String = "http://dlied5.myapp.com/myapp/1104466820/sgame/2017_com.tencent.tmgp.sgame_h177_1.42.1.6_a6157f.apk"
 
-    companion object {
-        const val TAG = "vanda"
-    }
-
-    private var textView: TextView? = null
+    private var cacheCurrentStep: Int? = null
+    private var breadcrumbsView: BreadcrumbsView? = null
+    private var mTextViewTitle: TextView? = null
+    private var mTextViewProgress: TextView? = null
+    private var mTextViewSpeed: TextView? = null
+    private var mTextViewTime: TextView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(TextView(this))
+        setContentView(R.layout.activity_breadcrumbs)
+
+        //Survive config changes.
+        if (lastCustomNonConfigurationInstance == null) {
+            cacheCurrentStep = 0
+        } else {
+            cacheCurrentStep = lastCustomNonConfigurationInstance as Int
+        }
+
+        breadcrumbsView = findViewById(R.id.breadcrumbs)
+        mTextViewTitle = findViewById(R.id.title)
+        mTextViewTitle!!.text = "王者荣耀.apk"
+        mTextViewProgress = findViewById(R.id.progress)
+        mTextViewSpeed = findViewById(R.id.speed)
+        mTextViewTime = findViewById(R.id.time)
+
+        //        findViewById(R.id.bt_next).setOnClickListener(new View.OnClickListener() {
+        //            @Override
+        //            public void onClick(View view) {
+        //                breadcrumbsView.nextStep(0, 0.9f);
+        //                breadcrumbsView.nextStep(1, 0.8f);
+        //                breadcrumbsView.nextStep(2, 0.7f);
+        //                breadcrumbsView.nextStep(3, 0.6f);
+        //                breadcrumbsView.nextStep(4, 0.5f);
+        //            }
+        //        });
+        //
+        //        findViewById(R.id.bt_prev).setOnClickListener(new View.OnClickListener() {
+        //            @Override
+        //            public void onClick(View view) {
+        //                breadcrumbsView.prevStep(0);
+        //                breadcrumbsView.prevStep(1);
+        //                breadcrumbsView.prevStep(2);
+        //                breadcrumbsView.prevStep(3);
+        //                breadcrumbsView.prevStep(4);
+        //            }
+        //        });
+
         testDownload()
     }
 
-//    private fun testAysn() {
-//        Log.e(TAG, "testAysn start thread = " + Thread.currentThread().name)
-//
-//        GlobalScope.launch(Dispatchers.Main) {
-//            textView?.text = loadData()
-//            selectChannelTest()
-//        }
-//
-//        Log.e(TAG, "testAysn end thread = " + Thread.currentThread().name)
-//    }
-//
-//    private suspend fun loadData(): String = withContext(Dispatchers.IO) {
-//        Log.e(TAG, "loadData start thread = " + Thread.currentThread().name)
-//
-//        delay(2000)
-//
-//        Log.e(TAG, "loadData end thread = " + Thread.currentThread().name)
-//
-//        "Result"
-//    }
-//
-//    fun fizz(context: CoroutineContext) = produce<String>(context) {
-//        while (true) { // sends "Fizz" every 300 ms
-//            delay(3000)
-//            send("Fizz")
-//        }
-//    }
-//
-//    fun buzz(context: CoroutineContext) = produce<String>(context) {
-//        while (true) { // sends "Buzz!" every 500 ms
-//            delay(5000)
-//            send("Buzz!")
-//        }
-//    }
-//
-//    suspend fun selectFizzBuzz(fizz: ReceiveChannel<String>, buzz: ReceiveChannel<String>) {
-//        select<Unit> { // <Unit> means that this select expression does not produce any result
-//            fizz.onReceive { value ->  // this is the first select clause
-//                println("fizz -> '$value'")
-//            }
-//            buzz.onReceive { value ->  // this is the second select clause
-//                println("buzz -> '$value'")
-//            }
-//        }
-//    }
-//
-//    suspend fun selectChannelTest(): String = withContext(Dispatchers.IO) {
-//        val fizz = fizz(coroutineContext)
-//        val buzz = buzz(coroutineContext)
-//        repeat(7) {
-//            selectFizzBuzz(fizz, buzz)
-//        }
-//
-//        ""
-//    }
-//            runBlocking<Unit> {
-//        val fizz = fizz(coroutineContext)
-//        val buzz = buzz(coroutineContext)
-//        repeat(7) {
-//            selectFizzBuzz(fizz, buzz)
-//        }
-//        coroutineContext.cancelChildren() // cancel fizz & buzz coroutines
-//    }
-
-    fun testDownload() {
-//        Executors.newSingleThreadScheduledExecutor().execute { DownloadRunnable(url) }
-
-        Thread(DownloadRunnable(url)).start()
+    private fun testDownload() {
+        val downloadTaskSchedule = DownloadTaskSchedule()
+        downloadTaskSchedule.start(url, this)
     }
+
+    override fun progress(sofar: Long, total: Long, childPercent: String, percent: String, threadId: Int, speed: String) {
+        breadcrumbsView!!.nextStep(threadId, java.lang.Float.valueOf(childPercent))
+        mTextViewProgress!!.text = String.format("%s/%s", SpeedUtils.formatSize(sofar), SpeedUtils.formatSize(total))
+        mTextViewSpeed!!.text = String.format("%s/s", speed)
+    }
+
 }

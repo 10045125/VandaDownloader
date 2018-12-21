@@ -2,7 +2,6 @@ package vanda.wzl.vandadownloader.io.file.separation
 
 import android.os.HandlerThread
 import android.os.Message
-import vanda.wzl.vandadownloader.progress.ProgressSegment
 
 class GlobalSingleThreadWriteFileStream private constructor() {
 
@@ -24,10 +23,6 @@ class GlobalSingleThreadWriteFileStream private constructor() {
             msg.what = HandlerSegment.MSG_WRITE
             msg.obj = writeSeparation
             SingleHolder.INSTANCE.mHandlerSegment.sendMessage(msg)
-        }
-
-        fun cancel(writeSeparation: ProgressSegment) {
-            SingleHolder.INSTANCE.mHandlerSegment.removeMessages(HandlerSegment.MSG_WRITE, writeSeparation)
         }
     }
 }

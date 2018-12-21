@@ -25,9 +25,5 @@ class GlobalSingleThreadHandlerProgress private constructor() {
             msg.obj = progressData
             SingleHolder.INSTANCE.mHandlerSegment.sendMessage(msg)
         }
-
-        fun cancel(writeSeparation: ProgressSegment) {
-            SingleHolder.INSTANCE.mHandlerSegment.removeMessages(HandlerSegment.MSG_WRITE, writeSeparation)
-        }
     }
 }
