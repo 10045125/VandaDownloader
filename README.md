@@ -17,9 +17,9 @@
 
 #### 简易流程图
 
-{% asset_img pic/download.png %}
-{% asset_img pic/callback.png %}
+![quarkdownloader](https://github.com/10045125/QuarkDownloader/blob/master/pic/callback.png "回调")
+![quarkdownloader](https://github.com/10045125/QuarkDownloader/blob/master/pic/download.png "读写分离原理")
 
 #### Demo
 
-{% asset_img img/demo.jpg %}
+![quarkdownloader](https://github.com/10045125/QuarkDownloader/blob/master/pic/demo.jpg "Demo")
