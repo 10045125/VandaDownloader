@@ -52,7 +52,7 @@ class MainActivity : AppCompatActivity(), DownloadListener {
 
         mTextViewThreadNum!!.text = "thread num (1)"
 
-        mAppCompatSeekBar!!.max = 64
+        mAppCompatSeekBar!!.max = 128
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             mAppCompatSeekBar!!.min = 1
         }
