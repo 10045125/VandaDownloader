@@ -4,6 +4,7 @@ import vanda.wzl.vandadownloader.io.file.separation.WriteSeparation
 import vanda.wzl.vandadownloader.progress.GlobalSingleThreadHandlerProgress
 import vanda.wzl.vandadownloader.progress.ProgressData
 import vanda.wzl.vandadownloader.status.OnStatus
+import vanda.wzl.vandadownloader.util.SpeedUtils
 import java.io.IOException
 import java.io.OutputStream
 import java.util.*
@@ -73,7 +74,11 @@ internal class WriteSeparationImpl(
 
             val intval = System.currentTimeMillis() - mTimes[0]
             if (status == OnStatus.COMPLETE || intval > progressIntval()) {
-                mTimes[1] = sofar
+
+                val curSofar = exeProgressCalc?.let { exeProgressCalc!!.sofar(threadId) } ?: 0
+                val mSpeedIncrement = (curSofar - mTimes[1]) * ONE_SECEND_TIME / intval
+
+                mTimes[1] = curSofar
                 mTimes[0] = System.currentTimeMillis()
 
                 if (status == OnStatus.COMPLETE) {
@@ -81,14 +86,16 @@ internal class WriteSeparationImpl(
                     mOutputStream?.close()
                 }
 
+
                 val progressData = ProgressData.obtain()
-                progressData.sofar = sofar
+                progressData.sofarChild = sofar
                 progressData.total = total
+                progressData.totalChild = segment
                 progressData.id = sofar
                 progressData.threadId = threadId
+                progressData.speedChild = SpeedUtils.formatSize(mSpeedIncrement)
                 progressData.status = status
                 progressData.exeProgressCalc = exeProgressCalc
-                progressData.segment = segment
                 progressData.downloadListener = downloadListener
                 GlobalSingleThreadHandlerProgress.ayncProgressData(progressData)
             }
@@ -112,6 +119,7 @@ internal class WriteSeparationImpl(
     }
 
     companion object {
-        private const val PROGRESS_INTVAL = 100 //ms
+        private const val PROGRESS_INTVAL = 1000 //ms
+        private const val ONE_SECEND_TIME = 1000 //ms
     }
 }

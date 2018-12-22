@@ -18,6 +18,7 @@ package io.victoralbertos.breadcumbs_view;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.LinearLayout;
 
@@ -68,6 +69,33 @@ public class BreadcrumbsView extends LinearLayout {
         });
     }
 
+    public BreadcrumbsView(Context context) {
+        super(context);
+        PropertiesHelper.init(this, null);
+    }
+
+    public void setSegmentNum(int segmentNum) {
+
+        if (steps != null) {
+            for (View view: steps) {
+                removeView(view);
+            }
+        }
+
+        nSteps = segmentNum;
+
+        createSteps();
+
+        invalidate();
+//        getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+//            @Override
+//            public void onGlobalLayout() {
+//                getViewTreeObserver().removeOnGlobalLayoutListener(this);
+//                createSteps();
+//            }
+//        });
+    }
+
     /**
      * Start counting from 0.
      *
@@ -112,24 +140,9 @@ public class BreadcrumbsView extends LinearLayout {
         }, 0);
     }
 
-    /**
-     * Should be called before this view is measured. Otherwise throw an IllegalStateException.
-     *
-     * @param currentStep the desired step
-     */
-    public void setCurrentStep(int currentStep) throws IllegalStateException {
-        if (steps != null) {
-            throw new IllegalStateException(
-                    "Illegal attempt to set the value of the current step once the view has been measured");
-        }
-        this.currentStep = currentStep;
-    }
-
     private void createSteps() {
         setOrientation(LinearLayout.HORIZONTAL);
         int nSeparators = nSteps - 1;
-//        int widthDot = radius * 2;
-//        int widthStep = ((getWidth() - widthDot) / nSeparators) - widthDot;
         int widthStep = getWidth() / nSteps;
 
         steps = new ArrayList<>(nSeparators);

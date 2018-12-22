@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.v4.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/ll_root"
@@ -14,7 +14,6 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="60dp"
         android:orientation="vertical">
 
         <FrameLayout
@@ -26,7 +25,7 @@
                 android:id="@+id/title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="16sp"/>
+                android:textSize="16sp" />
 
         </FrameLayout>
 
@@ -44,7 +43,7 @@
                 app:nextStepBorderDotColor="@color/colorNext"
                 app:nextStepFillDotColor="@color/colorNext"
                 app:nextStepSeparatorColor="@color/colorNext"
-                app:numberOfSteps="9"
+                app:numberOfSteps="5"
                 app:radiusDot="@dimen/radius_dot"
                 app:sizeDotBorder="@dimen/size_dot_border"
                 app:visitedStepBorderDotColor="@color/colorVisited"
@@ -53,8 +52,8 @@
 
             <RelativeLayout
                 android:layout_width="match_parent"
-                android:gravity="center_vertical"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical">
 
                 <TextView
                     android:id="@+id/progress"
@@ -83,34 +82,83 @@
 
         </FrameLayout>
 
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/recyclerview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="16dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/numthread"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TextView"
+                android:textColor="?android:textColorPrimary"
+                android:textSize="12sp"
+                app:layout_constraintHorizontal_bias="0.029"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <android.support.v7.widget.AppCompatSeekBar
+                android:id="@+id/seekBar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="0dp"
+                android:layout_marginBottom="8dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/numthread"
+                app:layout_constraintVertical_bias="0.0" />
+
+        </LinearLayout>
+
+
+        <Button
+            android:id="@+id/bt_prev"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/colorVisited"
+            android:text="Start"
+            android:textSize="12sp"
+            android:textColor="@color/colorWhite" />
+
     </LinearLayout>
 
+
     <!--<LinearLayout-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:layout_alignParentBottom="true"-->
-        <!--android:orientation="horizontal"-->
-        <!--android:weightSum="2">-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_alignParentBottom="true"-->
+    <!--android:orientation="horizontal"-->
+    <!--android:weightSum="2">-->
 
-        <!--<Button-->
-            <!--android:id="@+id/bt_prev"-->
-            <!--android:layout_width="0dp"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:layout_weight="1"-->
-            <!--android:backgroundTint="@color/colorVisited"-->
-            <!--android:text="@string/prev"-->
-            <!--android:textColor="@color/colorWhite" />-->
+    <!--<Button-->
+    <!--android:id="@+id/bt_prev"-->
+    <!--android:layout_width="0dp"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_weight="1"-->
+    <!--android:backgroundTint="@color/colorVisited"-->
+    <!--android:text="@string/prev"-->
+    <!--android:textColor="@color/colorWhite" />-->
 
-        <!--<Button-->
-            <!--android:id="@+id/bt_next"-->
-            <!--android:layout_width="0dp"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:layout_weight="1"-->
-            <!--android:backgroundTint="@color/colorVisited"-->
-            <!--android:text="@string/next"-->
-            <!--android:textColor="@color/colorWhite" />-->
+    <!--<Button-->
+    <!--android:id="@+id/bt_next"-->
+    <!--android:layout_width="0dp"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_weight="1"-->
+    <!--android:backgroundTint="@color/colorVisited"-->
+    <!--android:text="@string/next"-->
+    <!--android:textColor="@color/colorWhite" />-->
 
     <!--</LinearLayout>-->
 
 
-</RelativeLayout>
+</android.support.v4.widget.NestedScrollView>

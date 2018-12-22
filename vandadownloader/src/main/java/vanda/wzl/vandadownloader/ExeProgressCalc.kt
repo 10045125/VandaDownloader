@@ -4,4 +4,5 @@ interface ExeProgressCalc {
     fun exeProgressCalc(): Long
     fun allComplete(): Boolean
     fun speedIncrement(): String
+    fun sofar(curThreadId: Int): Long
 }

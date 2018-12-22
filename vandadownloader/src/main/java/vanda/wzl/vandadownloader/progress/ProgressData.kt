@@ -9,13 +9,14 @@ class ProgressData {
 
     var id: Long = 0
     var sofar: Long = 0
+    var sofarChild: Long = 0
     var total: Long = 0
-    var segment: Long = 0
-    var threadId: Int = 0
-    var totalProgress: Long = 0
+    var totalChild: Long = 0
     var speed: String = "0KB"
+    var speedChild: String = "0KB"
     var percent = "0.00"
     var percentChild = "0.00"
+    var threadId: Int = 0
 
     @OnStatus
     var status: Int = 0
@@ -25,15 +26,18 @@ class ProgressData {
 
     private fun reset() {
         id = -1
-        sofar = -1
+
+        sofar = 0
+        sofarChild = -1
         total = -1
-        status = -1
-        threadId = 0
-        segment = 0
-        totalProgress = 0
-        speed = "0KB"
+        totalChild = 0
         percent = "0.00"
         percentChild = "0.00"
+        speed = "0KB"
+        speedChild = speed
+        threadId = 0
+
+        status = -1
         downloadListener = null
     }
 

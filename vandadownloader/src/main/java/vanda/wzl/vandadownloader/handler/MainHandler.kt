@@ -20,8 +20,16 @@ class MainHandler {
     companion object {
 
         private const val MSG_PRO_DATA = 0x1111
+        private const val MSG_COMPLETE = 0x1112
 
         fun syncProgressDataToMain(progressData: ProgressData) {
+            val msg = Message.obtain()
+            msg.what = MSG_PRO_DATA
+            msg.obj = progressData
+            SingleHolder.INSTANCE.mHandler.sendMessage(msg)
+        }
+
+        fun syncCompleteProgressDataToMain(progressData: ProgressData) {
             val msg = Message.obtain()
             msg.what = MSG_PRO_DATA
             msg.obj = progressData
@@ -31,7 +39,25 @@ class MainHandler {
         private fun progressData(msg: Message) {
             val progressData = msg.obj as ProgressData
 
-            progressData.downloadListener?.progress(progressData.totalProgress, progressData.total, progressData.percentChild, progressData.percent, progressData.threadId, progressData.speed)
+            progressData.downloadListener?.progress(
+                    progressData.sofar,
+                    progressData.sofarChild,
+                    progressData.total,
+                    progressData.totalChild,
+                    progressData.percent,
+                    progressData.percentChild,
+                    progressData.speed,
+                    progressData.speedChild,
+                    progressData.threadId
+            )
+
+            progressData.recycle()
+        }
+
+        private fun complete(msg: Message) {
+            val progressData = msg.obj as ProgressData
+
+            progressData.downloadListener?.onComplete()
 
             progressData.recycle()
         }
@@ -41,6 +67,7 @@ class MainHandler {
         override fun handleMessage(msg: Message) {
             when (msg.what) {
                 MSG_PRO_DATA -> progressData(msg)
+                MSG_COMPLETE -> complete(msg)
             }
         }
     }

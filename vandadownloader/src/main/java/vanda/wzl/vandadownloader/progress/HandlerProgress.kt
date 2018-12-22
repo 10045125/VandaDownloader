@@ -19,12 +19,12 @@ class HandlerProgress(looper: Looper) : Handler(looper) {
 
     private fun progressData(msg: Message) {
         val progressData = msg.obj as ProgressData
-        val totalProgress = progressData.exeProgressCalc?.exeProgressCalc()
+        val sofar = progressData.exeProgressCalc?.exeProgressCalc()
         val speed = progressData.exeProgressCalc?.speedIncrement()
-        val percent = String.format(FORMAT, totalProgress!! / progressData.total.toFloat())
-        val percentChild = String.format(FORMAT, progressData.sofar / progressData.segment.toFloat())
+        val percent = String.format(FORMAT, sofar!! / progressData.total.toFloat())
+        val percentChild = String.format(FORMAT, progressData.sofarChild / progressData.totalChild.toFloat())
 
-        progressData.totalProgress = totalProgress
+        progressData.sofar = sofar
         progressData.speed = speed!!
         progressData.percent = percent
         progressData.percentChild = percentChild
@@ -43,15 +43,18 @@ class HandlerProgress(looper: Looper) : Handler(looper) {
             }
 
             OnStatus.PROGRESS -> {
-                Log.d("vanda", "sofar = ${progressData.sofar} segment = ${progressData.segment} totalProgress = $totalProgress  percent = $percent percentChild = $percentChild speed = $speed  threadId = ${progressData.threadId}")
+                Log.d("vanda", "sofarChild = ${progressData.sofarChild} segment = ${progressData.totalChild} totalProgress = $sofar  percent = $percent percentChild = $percentChild speed = $speed  threadId = ${progressData.threadId}")
                 MainHandler.syncProgressDataToMain(progressData)
             }
 
             OnStatus.COMPLETE -> {
                 val allComplete = progressData.exeProgressCalc?.allComplete()
-                Log.d("vanda", "sofar = ${progressData.sofar} segment = ${progressData.segment} percent = $percent percentChild = $percentChild threadId = ${progressData.threadId} complete, allComplete = $allComplete")
-
-                progressData.recycle()
+                Log.d("vanda", "sofarChild = ${progressData.sofarChild} segment = ${progressData.totalChild} percent = $percent percentChild = $percentChild threadId = ${progressData.threadId} complete, allComplete = $allComplete")
+                MainHandler.syncProgressDataToMain(progressData)
+                if (allComplete!!) {
+                    MainHandler.syncCompleteProgressDataToMain(progressData)
+                }
+//                progressData.recycle()
             }
 
             OnStatus.PAUSE -> {

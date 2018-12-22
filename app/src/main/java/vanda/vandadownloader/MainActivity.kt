@@ -1,7 +1,14 @@
 package vanda.vandadownloader
 
+import android.annotation.SuppressLint
+import android.os.Build
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.widget.AppCompatSeekBar
+import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView
+import android.widget.Button
+import android.widget.SeekBar
 import android.widget.TextView
 import io.victoralbertos.breadcumbs_view.BreadcrumbsView
 import vanda.wzl.vandadownloader.DownloadListener
@@ -13,25 +20,29 @@ class MainActivity : AppCompatActivity(), DownloadListener {
     private val url = "http://dlied5.myapp.com/myapp/1104466820/sgame/2017_com.tencent.tmgp.sgame_h177_1.42.1.6_a6157f.apk"
 //    private val url: String = "https://dldir1.qq.com/weixin/android/weixin673android1360.apk"
 
-
-    private var cacheCurrentStep: Int? = null
     private var breadcrumbsView: BreadcrumbsView? = null
     private var mTextViewTitle: TextView? = null
     private var mTextViewProgress: TextView? = null
     private var mTextViewSpeed: TextView? = null
     private var mTextViewTime: TextView? = null
+    private var mAppCompatSeekBar: AppCompatSeekBar? = null
+    private var mTextViewThreadNum: TextView? = null
+
+    private var mBtn: Button? = null
+
+    private var mAdapter: RecyclerViewAdapter? = null
+    private var mRecyclerView: RecyclerView? = null
+
+    private var mThreadNum = 1
+    private var mIsStart = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_breadcrumbs)
 
-        //Survive config changes.
-        if (lastCustomNonConfigurationInstance == null) {
-            cacheCurrentStep = 0
-        } else {
-            cacheCurrentStep = lastCustomNonConfigurationInstance as Int
-        }
-
+        mAppCompatSeekBar = findViewById(R.id.seekBar)
+        mTextViewThreadNum = findViewById(R.id.numthread)
+        mBtn = findViewById(R.id.bt_prev)
         breadcrumbsView = findViewById(R.id.breadcrumbs)
         mTextViewTitle = findViewById(R.id.title)
         mTextViewTitle!!.text = "王者荣耀.apk"
@@ -39,40 +50,87 @@ class MainActivity : AppCompatActivity(), DownloadListener {
         mTextViewSpeed = findViewById(R.id.speed)
         mTextViewTime = findViewById(R.id.time)
 
-        //        findViewById(R.id.bt_next).setOnClickListener(new View.OnClickListener() {
-        //            @Override
-        //            public void onClick(View view) {
-        //                breadcrumbsView.nextStep(0, 0.9f);
-        //                breadcrumbsView.nextStep(1, 0.8f);
-        //                breadcrumbsView.nextStep(2, 0.7f);
-        //                breadcrumbsView.nextStep(3, 0.6f);
-        //                breadcrumbsView.nextStep(4, 0.5f);
-        //            }
-        //        });
-        //
-        //        findViewById(R.id.bt_prev).setOnClickListener(new View.OnClickListener() {
-        //            @Override
-        //            public void onClick(View view) {
-        //                breadcrumbsView.prevStep(0);
-        //                breadcrumbsView.prevStep(1);
-        //                breadcrumbsView.prevStep(2);
-        //                breadcrumbsView.prevStep(3);
-        //                breadcrumbsView.prevStep(4);
-        //            }
-        //        });
+        mTextViewThreadNum!!.text = "thread num (1)"
 
+        mAppCompatSeekBar!!.max = 64
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            mAppCompatSeekBar!!.min = 1
+        }
+
+        mAppCompatSeekBar!!.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            @SuppressLint("SetTextI18n")
+            override fun onProgressChanged(seekBar: SeekBar, i: Int, b: Boolean) {
+                mThreadNum = if (i == 0) 1 else i
+                mTextViewThreadNum!!.text = "thread num ($mThreadNum)"
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar) {
+
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar) {
+                mThreadNum = if (seekBar.progress == 0) 1 else seekBar.progress
+            }
+        })
+
+        mBtn!!.setOnClickListener {
+            if (!mIsStart) {
+                mIsStart = true
+                start()
+            }
+        }
+    }
+
+    fun start() {
+        breadcrumbsView!!.setSegmentNum(mThreadNum)
+        initRecyclerView()
         testDownload()
     }
 
     private fun testDownload() {
-        val downloadTaskSchedule = DownloadTaskSchedule()
+        val downloadTaskSchedule = DownloadTaskSchedule(mThreadNum)
         downloadTaskSchedule.start(url, this)
     }
 
-    override fun progress(sofar: Long, total: Long, childPercent: String, percent: String, threadId: Int, speed: String) {
-        breadcrumbsView!!.nextStep(threadId, java.lang.Float.valueOf(childPercent))
+    @SuppressLint("SetTextI18n")
+    override fun progress(sofar: Long, sofarChild: Long, total: Long, totalChild: Long, percent: String, percentChild: String, speed: String, speedChild: String, threadId: Int) {
+        breadcrumbsView!!.nextStep(threadId, java.lang.Float.valueOf(percentChild))
         mTextViewProgress!!.text = String.format("%s/%s", SpeedUtils.formatSize(sofar), SpeedUtils.formatSize(total))
         mTextViewSpeed!!.text = String.format("%s/s", speed)
+        mTextViewTime!!.text = "${(sofar * 100 /total).toInt()}%"
+
+        val itemData = mAdapter!!.getItemData(threadId)
+        itemData.title = "Segment$threadId (${SpeedUtils.formatSize(threadId * totalChild)} ~ ${SpeedUtils.formatSize((threadId + 1) * totalChild)})"
+        itemData.progress = percentChild
+        itemData.speed = String.format("%s/s", speedChild)
+
+        mAdapter!!.notifyItemChanged(threadId)
     }
+
+    override fun onComplete() {
+        mIsStart = false
+    }
+
+
+    private fun initRecyclerView() {
+        mRecyclerView = findViewById(R.id.recyclerview)
+        mRecyclerView!!.layoutManager = LinearLayoutManager(this)
+
+        mAdapter = RecyclerViewAdapter()
+
+        val list = ArrayList<ItemData>()
+
+        for (i in 1..mThreadNum) {
+            val itemData = ItemData("Segment${(i - 1)}", "0KB/s", "0.00")
+            list.add(itemData)
+        }
+
+        mAdapter!!.setList(list)
+        mRecyclerView!!.adapter = mAdapter
+        mAdapter!!.notifyDataSetChanged()
+
+
+    }
+
 
 }

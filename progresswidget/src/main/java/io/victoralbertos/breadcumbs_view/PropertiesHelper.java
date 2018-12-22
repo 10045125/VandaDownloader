@@ -50,10 +50,10 @@ final class PropertiesHelper {
 
     try {
       breadcrumbsView.nSteps = a.getInt(R.styleable.BreadcrumbsView_numberOfSteps, 0);
-      if (breadcrumbsView.nSteps == 0) {
-        throw new IllegalStateException(
-            "You must set a number of steps. Use 'numberOfSteps' attribute to supply a value greater than 1");
-      }
+//      if (breadcrumbsView.nSteps == 0) {
+//        throw new IllegalStateException(
+//            "You must set a number of steps. Use 'numberOfSteps' attribute to supply a value greater than 1");
+//      }
 
       breadcrumbsView.visitedStepBorderDotColor =
           a.getColor(R.styleable.BreadcrumbsView_visitedStepBorderDotColor,

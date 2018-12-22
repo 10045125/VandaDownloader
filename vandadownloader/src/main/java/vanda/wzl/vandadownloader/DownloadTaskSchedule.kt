@@ -1,17 +1,14 @@
 package vanda.wzl.vandadownloader
 
 import android.os.Environment
-import android.text.TextUtils
 import android.util.Log
-import okhttp3.Request
-import vanda.wzl.vandadownloader.net.OkHttpProxy
+import vanda.wzl.vandadownloader.net.ProviderNetFileTypeImpl
 import vanda.wzl.vandadownloader.util.SpeedUtils
 import java.io.File
 import java.io.InputStream
-import java.net.HttpURLConnection
 import java.util.concurrent.Executors
 
-class DownloadTaskSchedule : ExeProgressCalc {
+class DownloadTaskSchedule(threadNum: Int) : ExeProgressCalc {
 
     companion object {
         const val SEEK_SIZE = 3
@@ -21,11 +18,11 @@ class DownloadTaskSchedule : ExeProgressCalc {
         const val ONE_SECEND_TIME = 1000 //ms
     }
 
-    private val mThreadNum = 9
+    private val mThreadNum = threadNum
     private val mList = ArrayList<ExeRunnable>()
-    private var mThreadPool = Executors.newFixedThreadPool(12)
+    private var mThreadPool = Executors.newFixedThreadPool(threadNum + 1)
     private var mFileSize: Long = -1
-    private var isSupportSeek: Boolean = false
+    private var mIsSupportMutil: Boolean = false
     private var mCurSofar = 0L
     private var mSpeedIncrement = 0L
     private var mTime = System.currentTimeMillis()
@@ -36,66 +33,60 @@ class DownloadTaskSchedule : ExeProgressCalc {
         }
     }
 
-    private fun startAync(url: String, downloadListener: DownloadListener) {
-        synchronized(lock = mList) {
-            val inputStream = analysisFileAttributes(url)
-            val exSize = mFileSize % mThreadNum
-            val segmentSize = (mFileSize - exSize) / mThreadNum
-            val threadNum = if (isSupportSeek) mThreadNum else 1
+    private fun handlerTaskParam(url: String): InputStream {
+        val mProviderNetFileType = ProviderNetFileTypeImpl(url)
+        val inputStream = mProviderNetFileType.firstIntactInputStream()
+        mFileSize = mProviderNetFileType.fileSize()
+        mIsSupportMutil = mProviderNetFileType.isSupportMutil()
+        return inputStream
+    }
 
-            Log.i("vanda", "mFileSize = $mFileSize exSize = $exSize  segmentSize = $segmentSize")
+    private fun createFile() {
+        val tempPath = Environment.getExternalStorageDirectory().absolutePath + "/weixin.apk"
+        val file = File(tempPath)
+        if (file.exists()) {
+            file.delete()
+        }
+        file.createNewFile()
+    }
 
-            val tempPath = Environment.getExternalStorageDirectory().absolutePath + "/weixin.apk"
-            val file = File(tempPath)
-            if (file.exists()) {
-                file.delete()
-            }
-            file.createNewFile()
+    private fun exeTask(threadNum: Int, url: String, segmentSize: Long, exSize: Long, inputStream: InputStream, downloadListener: DownloadListener) {
+        val thread = threadNum - 1
+        for (i in 0..thread) {
 
-            for (i in 1..threadNum) {
-                val downloadRunnable = DownloadRunnable(url, segmentSize, exSize, 0, if (i == 1) inputStream else null, i - 1, mFileSize, mThreadNum, this, downloadListener)
-                mList.add(downloadRunnable)
-            }
+            val downloadRunnable = DownloadRunnable(
+                    url,
+                    segmentSize,
+                    exSize,
+                    0,
+                    if (i == 0) inputStream else null,
+                    i,
+                    mFileSize,
+                    mThreadNum,
+                    this,
+                    downloadListener)
 
-            for (downloadRunnable in mList) {
-                mThreadPool.execute(downloadRunnable)
-            }
+            mList.add(downloadRunnable)
+        }
 
+        for (downloadRunnable in mList) {
+            mThreadPool.execute(downloadRunnable)
         }
     }
 
-    private fun analysisFileAttributes(url: String): InputStream? {
-        val mRequestBuilder = Request.Builder()
-        mRequestBuilder.addHeader("Range", "bytes=0-$SEEK_SIZE")
-        var request = mRequestBuilder.url(url).get().build()
-        var mCall = OkHttpProxy.instance.newCall(request)
+    private fun startAync(url: String, downloadListener: DownloadListener) {
+        synchronized(lock = mList) {
+            createFile()
 
-        var mResponse = mCall.execute()
-        val code = mResponse.code()
+            val inputStream = handlerTaskParam(url)
+            val exSize = mFileSize % mThreadNum
+            val segmentSize = (mFileSize - exSize) / mThreadNum
+            val threadNum = if (mIsSupportMutil) mThreadNum else 1
 
-        // ------- 如果同时收到了Transfer-Encoding字段和Content-Length头字段，那么必须忽略Content-Length字段
+            Log.i("vanda", "mFileSize = $mFileSize exSize = $exSize  segmentSize = $segmentSize")
 
-        val transferEncoding = mResponse.header("Transfer-Encoding")
-
-        if (TextUtils.equals(transferEncoding, TYPE_CHUNKED)) {
-            isSupportSeek = false
-        } else {
-            isSupportSeek = code == HttpURLConnection.HTTP_PARTIAL && !TextUtils.isEmpty(mResponse.header("Content-Range"))
-            val contentLength: Long? = mResponse.header("Content-Length")?.toLong()
-            Log.e("vanda", "transferEncoding=$transferEncoding    content-length=$contentLength")
+            exeTask(threadNum, url, segmentSize, exSize, inputStream, downloadListener)
         }
-
-        Log.e("vanda", "isSupportSeek=$isSupportSeek")
-
-        if (TextUtils.isEmpty(transferEncoding)) {
-            mRequestBuilder.addHeader("Range", "bytes=0-")
-            request = mRequestBuilder.url(url).get().build()
-            mCall = OkHttpProxy.instance.newCall(request)
-            mResponse = mCall.execute()
-            mFileSize = mResponse.header("Content-Length")?.toLong()!!
-
-        }
-        return mResponse.body()?.byteStream()
     }
 
     override fun exeProgressCalc(): Long {
@@ -129,5 +120,11 @@ class DownloadTaskSchedule : ExeProgressCalc {
 
     override fun speedIncrement(): String {
         return SpeedUtils.formatSize(mSpeedIncrement)
+    }
+
+    override fun sofar(curThreadId: Int): Long {
+        synchronized(lock = mList) {
+            return mList[curThreadId].sofar()
+        }
     }
 }

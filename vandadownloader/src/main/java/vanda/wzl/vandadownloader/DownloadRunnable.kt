@@ -17,11 +17,11 @@ import java.util.concurrent.ConcurrentLinkedQueue
 class DownloadRunnable(
         private val mUrl: String,
         private val mSegmentSize: Long,
-        mExtSize: Long,
+        private val mExtSize: Long,
         private var mSofar: Long,
-        private val mInputStream: InputStream?,
+        private var mInputStream: InputStream?,
         private val mThreadSerialNumber: Int,
-        mFileSize: Long,
+        private val mFileSize: Long,
         private val mThreadNumber: Int,
         private val mExeProgressCalc: ExeProgressCalc,
         private val mDownloadListener: DownloadListener
@@ -44,11 +44,8 @@ class DownloadRunnable(
     private var mSeparationChunkSize = 0L
 
     init {
-        mStartPosition = if (mSegmentSize > 0) mThreadSerialNumber * mSegmentSize + mSofar else -1
-        mEndPosition = if (mThreadSerialNumber == (mThreadNumber - 1)) {
-            (mThreadSerialNumber + 1) * mSegmentSize + mExtSize
-        } else (mThreadSerialNumber + 1) * mSegmentSize
         mTotal = mFileSize
+        calcEndPosition()
         mSeparationChunkSize = if (mThreadSerialNumber == (mThreadNumber - 1)) {
             mSegmentSize + mExtSize
         } else mSegmentSize
@@ -65,6 +62,19 @@ class DownloadRunnable(
             return RandomAccessFile(file, "rw")
         }
 
+    private fun calcStartPosition() {
+        mStartPosition = if (mStartPosition != -1L) {
+            mStartPosition + mSofar
+        } else {
+            if (mSegmentSize > 0) mThreadSerialNumber * mSegmentSize + mSofar else -1
+        }
+    }
+
+    private fun calcEndPosition() {
+        mEndPosition = if (mThreadSerialNumber == (mThreadNumber - 1)) {
+            (mThreadSerialNumber + 1) * mSegmentSize + mExtSize
+        } else (mThreadSerialNumber + 1) * mSegmentSize
+    }
 
     private fun startPosition(): Long {
         return mStartPosition
@@ -84,26 +94,38 @@ class DownloadRunnable(
 
     override fun run() {
         Log.i("vanda", "run num = $mThreadSerialNumber  startPosition = ${startPosition()} endPosition= ${endPosition()} mSofar = $mSofar")
-        if (mInputStream != null && mThreadSerialNumber == 0) {
-            fetch(mInputStream)
-        } else {
-            val mRequestBuilder = Request.Builder()
-            if (startPosition() >= 0) {
-                val range = "bytes=${startPosition()}-" + if (mThreadSerialNumber == mThreadNumber - 1) "" else endPosition()
-                Log.i("vanda", "range = $range")
-                mRequestBuilder.addHeader("Range", range)
+        do {
+
+            if (complete()) {
+                break
             }
-            val request = mRequestBuilder.url(mUrl).get().build()
-            val mCall = OkHttpProxy.instance.newCall(request)
-            try {
-                val mResponse = mCall.execute()
-                if (mResponse.body() != null) {
-                    fetch(mResponse.body()!!.source().inputStream())
+
+            calcStartPosition()
+
+            if (mInputStream != null && mThreadSerialNumber == 0) {
+                fetch(mInputStream!!)
+            } else {
+                val mRequestBuilder = Request.Builder()
+                if (startPosition() >= 0) {
+                    val range = "bytes=${startPosition()}-" + if (mThreadSerialNumber == mThreadNumber - 1) "" else endPosition()
+                    Log.i("vanda", "range = $range")
+                    mRequestBuilder.addHeader("Range", range)
                 }
-            } catch (e: IOException) {
-                e.printStackTrace()
+                val request = mRequestBuilder.url(mUrl).get().build()
+                val mCall = OkHttpProxy.instance.newCall(request)
+                try {
+                    val mResponse = mCall.execute()
+                    if (mResponse.body() != null) {
+                        fetch(mResponse.body()!!.source().inputStream())
+                    }
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                }
             }
-        }
+
+            mInputStream = null
+
+        } while (true)
     }
 
     private fun fetch(inputStream: InputStream) {
@@ -161,6 +183,8 @@ class DownloadRunnable(
             }
         } catch (e: IOException) {
             e.printStackTrace()
+
+
         }
     }
 
