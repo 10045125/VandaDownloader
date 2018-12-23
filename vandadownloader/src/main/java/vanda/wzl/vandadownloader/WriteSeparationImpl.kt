@@ -24,9 +24,12 @@ internal class WriteSeparationImpl(
     private var time: Long = 0
     private var threadId: Int = 0
     private var segment: Long = 0
+    private var extSize: Long = 0
     private var status: Int = OnStatus.INVALID
     private var exeProgressCalc: ExeProgressCalc? = null
     private var downloadListener: DownloadListener? = null
+    private var url: String = ""
+    private var path: String = ""
 
     override fun time(time: Long) {
         this.time = time
@@ -64,6 +67,18 @@ internal class WriteSeparationImpl(
         this.segment = segment
     }
 
+    override fun url(url: String) {
+        this.url = url
+    }
+
+    override fun path(path: String) {
+        this.path = path
+    }
+
+    override fun extSize(extSize: Long) {
+        this.extSize = extSize
+    }
+
     private fun progressIntval(): Int {
         return PROGRESS_INTVAL
     }
@@ -86,17 +101,20 @@ internal class WriteSeparationImpl(
                     mOutputStream?.close()
                 }
 
-
                 val progressData = ProgressData.obtain()
                 progressData.sofarChild = sofar
                 progressData.total = total
                 progressData.totalChild = segment
-                progressData.id = sofar
+                progressData.id = id
                 progressData.threadId = threadId
                 progressData.speedChild = SpeedUtils.formatSize(mSpeedIncrement)
                 progressData.status = status
                 progressData.exeProgressCalc = exeProgressCalc
                 progressData.downloadListener = downloadListener
+                progressData.url = url
+                progressData.path = path
+                progressData.segment = segment
+                progressData.extSize = extSize
                 GlobalSingleThreadHandlerProgress.ayncProgressData(progressData)
             }
 

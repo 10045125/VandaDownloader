@@ -51,4 +51,5 @@ dependencies {
     implementation project(':vandadownloader')
     implementation project(':progresswidget')
     implementation 'com.white:progressview:1.0.1'
+    implementation 'com.facebook.stetho:stetho:1.5.0'
 }

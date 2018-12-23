@@ -6,6 +6,8 @@ import okhttp3.Request
 import quarkokio.buffer
 import quarkokio.sink
 import quarkokio.source
+import vanda.wzl.vandadownloader.database.RemarkMultiThreadPointSqlEntry
+import vanda.wzl.vandadownloader.database.RemarkPointSql
 import vanda.wzl.vandadownloader.io.file.io.RandomAcessFileOutputStream
 import vanda.wzl.vandadownloader.io.file.separation.GlobalSingleThreadWriteFileStream
 import vanda.wzl.vandadownloader.io.file.separation.WriteSeparation
@@ -25,7 +27,9 @@ class DownloadRunnable(
         private val mThreadNumber: Int,
         private val mIsSupportMulti: Boolean,
         private val mExeProgressCalc: ExeProgressCalc,
-        private val mDownloadListener: DownloadListener
+        private val mDownloadListener: DownloadListener,
+        private val mPath: String,
+        private val mDownloadId: Long
 ) : ExeRunnable {
 
     companion object {
@@ -52,18 +56,27 @@ class DownloadRunnable(
         mSeparationChunkSize = if (mThreadSerialNumber == (mThreadNumber - 1)) {
             mSegmentSize + mExtSize
         } else mSegmentSize
+
+        initDatabase()
     }
 
     private val mRandomAccessFile: RandomAccessFile
         @Throws(IOException::class)
         get() {
-            val tempPath = Environment.getExternalStorageDirectory().absolutePath + "/weixin.apk"
-            val file = File(tempPath)
+            val file = File(mPath)
             if (!file.exists()) {
                 file.createNewFile()
             }
             return RandomAccessFile(file, "rw")
         }
+
+    private fun initDatabase() {
+        if (!mExeProgressCalc.remarkMultiThreadPointSqlEntry(mDownloadId, mThreadSerialNumber.toLong()).invalid) {
+            val remarkMultiThreadPointSqlEntry = RemarkMultiThreadPointSqlEntry()
+            remarkMultiThreadPointSqlEntry.fillingValue(-1, mUrl, mSofar, mTotal, OnStatus.PENGING, mThreadSerialNumber, mDownloadId, mSegmentSize, mExtSize)
+            mExeProgressCalc.insert(remarkMultiThreadPointSqlEntry)
+        }
+    }
 
     private fun calcStartPosition(): Long {
         mStartPosition = if (isChunk()) {
@@ -215,12 +228,15 @@ class DownloadRunnable(
     private fun handleProgressValue(writeSeparation: WriteSeparation, sofar: Long, total: Long, id: Long, threadId: Int, status: Int) {
         writeSeparation.sofar(sofar)
         writeSeparation.total(total)
-        writeSeparation.id(id)
+        writeSeparation.id(mDownloadId)
         writeSeparation.status(status)
         writeSeparation.threadId(threadId)
         writeSeparation.exeProgressCalc(mExeProgressCalc)
         writeSeparation.downloadListener(mDownloadListener)
         writeSeparation.segment(mSeparationChunkSize)
+        writeSeparation.extSize(mExtSize)
+        writeSeparation.url(mUrl)
+        writeSeparation.path(mPath)
     }
 
     private fun onCancel(): Boolean {

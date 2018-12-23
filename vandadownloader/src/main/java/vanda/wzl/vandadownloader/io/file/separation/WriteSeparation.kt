@@ -17,5 +17,9 @@ interface WriteSeparation {
     fun exeProgressCalc(exeProgressCalc: ExeProgressCalc)
     fun time(time: Long)
     fun segment(segment: Long)
+    fun extSize(extSize: Long)
     fun downloadListener(downloadListener: DownloadListener)
+    fun url(url: String)
+    fun path(path: String)
+
 }

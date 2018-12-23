@@ -2,12 +2,16 @@ package vanda.wzl.vandadownloader.progress
 
 import vanda.wzl.vandadownloader.DownloadListener
 import vanda.wzl.vandadownloader.ExeProgressCalc
+import vanda.wzl.vandadownloader.database.RemarkMultiThreadPointSqlEntry
+import vanda.wzl.vandadownloader.database.RemarkPointSqlEntry
 import vanda.wzl.vandadownloader.status.OnStatus
 
 class ProgressData {
     private var mNext: ProgressData? = null
 
     var id: Long = 0
+    var url: String = ""
+    var path: String = ""
     var sofar: Long = 0
     var sofarChild: Long = 0
     var total: Long = 0
@@ -18,11 +22,27 @@ class ProgressData {
     var percentChild = "0.00"
     var threadId: Int = 0
 
+    var segment: Long = 0
+    var extSize: Long = 0
+
     @OnStatus
     var status: Int = 0
 
     var exeProgressCalc: ExeProgressCalc? = null
     var downloadListener: DownloadListener? = null
+
+    private var remarkPointSqlEntry: RemarkPointSqlEntry = RemarkPointSqlEntry()
+    private var remarkMultiThreadPointSqlEntry: RemarkMultiThreadPointSqlEntry = RemarkMultiThreadPointSqlEntry()
+
+    fun fillingRemarkPointSqlEntry(): RemarkPointSqlEntry {
+        remarkPointSqlEntry.fillingValue(id, url, path, sofar, total, status)
+        return remarkPointSqlEntry
+    }
+
+    fun fillingRemarkMultiThreadPointSqlEntry(): RemarkMultiThreadPointSqlEntry {
+        remarkMultiThreadPointSqlEntry.fillingValue(-1, url, sofarChild, total, status, threadId, id, segment, extSize)
+        return remarkMultiThreadPointSqlEntry
+    }
 
     private fun reset() {
         id = -1
@@ -39,6 +59,9 @@ class ProgressData {
 
         status = -1
         downloadListener = null
+
+        remarkPointSqlEntry.reset()
+        remarkMultiThreadPointSqlEntry.reset()
     }
 
     fun recycle() {

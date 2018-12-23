@@ -7,6 +7,7 @@ import android.os.Message
 import android.util.Log
 import vanda.wzl.vandadownloader.handler.MainHandler
 import vanda.wzl.vandadownloader.status.OnStatus
+import vanda.wzl.vandadownloader.threadpool.AutoAdjustThreadPool
 
 class HandlerProgress(looper: Looper) : Handler(looper) {
     override fun handleMessage(msg: Message) {
@@ -44,6 +45,8 @@ class HandlerProgress(looper: Looper) : Handler(looper) {
 
             OnStatus.PROGRESS -> {
                 Log.d("vanda", "sofarChild = ${progressData.sofarChild} segment = ${progressData.totalChild} totalProgress = $sofar  percent = $percent percentChild = $percentChild speed = $speed  threadId = ${progressData.threadId}")
+                progressData.exeProgressCalc?.update(progressData.fillingRemarkMultiThreadPointSqlEntry())
+                progressData.exeProgressCalc?.update(progressData.fillingRemarkPointSqlEntry())
                 MainHandler.syncProgressDataToMain(progressData)
             }
 
@@ -52,7 +55,12 @@ class HandlerProgress(looper: Looper) : Handler(looper) {
                 Log.d("vanda", "sofarChild = ${progressData.sofarChild} segment = ${progressData.totalChild} percent = $percent percentChild = $percentChild threadId = ${progressData.threadId} complete, allComplete = $allComplete")
                 MainHandler.syncProgressDataToMain(progressData)
                 if (allComplete!!) {
+                    progressData.exeProgressCalc?.deleteThreadInfo(progressData.id)
                     MainHandler.syncCompleteProgressDataToMain(progressData)
+
+                    postDelayed({
+                        AutoAdjustThreadPool.stop()
+                    }, 10 * 1000)
                 }
 //                progressData.recycle()
             }

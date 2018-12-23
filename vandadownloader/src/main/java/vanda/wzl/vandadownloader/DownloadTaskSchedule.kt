@@ -1,14 +1,22 @@
 package vanda.wzl.vandadownloader
 
+import android.content.Context
 import android.os.Environment
 import android.util.Log
+import vanda.wzl.vandadownloader.database.RemarkMultiThreadPointSqlEntry
+import vanda.wzl.vandadownloader.database.RemarkPointSql
+import vanda.wzl.vandadownloader.database.RemarkPointSqlEntry
+import vanda.wzl.vandadownloader.database.RemarkPointSqlImpl
 import vanda.wzl.vandadownloader.net.ProviderNetFileTypeImpl
+import vanda.wzl.vandadownloader.status.OnStatus
+import vanda.wzl.vandadownloader.threadpool.AutoAdjustThreadPool
+import vanda.wzl.vandadownloader.util.DownloadUtils
 import vanda.wzl.vandadownloader.util.SpeedUtils
 import java.io.File
 import java.io.InputStream
 import java.util.concurrent.Executors
 
-class DownloadTaskSchedule(threadNum: Int) : ExeProgressCalc {
+class DownloadTaskSchedule(threadNum: Int, context: Context) : AbstractDownloadTaskSchedule(context) {
 
     companion object {
         const val SEEK_SIZE = 3
@@ -18,19 +26,21 @@ class DownloadTaskSchedule(threadNum: Int) : ExeProgressCalc {
         const val ONE_SECEND_TIME = 1000 //ms
     }
 
-    private val mThreadNum = threadNum
+    private var mThreadNum = threadNum
     private val mList = ArrayList<ExeRunnable>()
-    private var mThreadPool = Executors.newFixedThreadPool(threadNum + 1)
     private var mFileSize: Long = -1
     private var mIsSupportMulti: Boolean = false
     private var mCurSofar = 0L
     private var mSpeedIncrement = 0L
     private var mTime = System.currentTimeMillis()
+    private var mPath: String = ""
+    private var mDownloadId: Long = -1L
+    private var mUrl: String = ""
 
     fun start(url: String, downloadListener: DownloadListener) {
-        mThreadPool.execute {
+        AutoAdjustThreadPool.execute(Runnable {
             startAync(url, downloadListener)
-        }
+        })
     }
 
     private fun handlerTaskParam(url: String): InputStream {
@@ -42,15 +52,23 @@ class DownloadTaskSchedule(threadNum: Int) : ExeProgressCalc {
     }
 
     private fun createFile() {
-        val tempPath = Environment.getExternalStorageDirectory().absolutePath + "/weixin.apk"
-        val file = File(tempPath)
+        mPath = Environment.getExternalStorageDirectory().absolutePath + "/weixin.apk"
+        val file = File(mPath)
         if (file.exists()) {
             file.delete()
         }
         file.createNewFile()
     }
 
-    private fun exeTask(threadNum: Int, url: String, segmentSize: Long, exSize: Long, inputStream: InputStream, downloadListener: DownloadListener) {
+    private fun initDatabaseInfo() {
+        if (!remarkPointSqlEntry(mDownloadId).invalid) {
+            val remarkPointSqlEntry = RemarkPointSqlEntry()
+            remarkPointSqlEntry.fillingValue(mDownloadId, mUrl, mPath, 0, mFileSize, OnStatus.INVALID)
+            insert(remarkPointSqlEntry)
+        }
+    }
+
+    private fun exeTask(threadNum: Int, url: String, sofar: Long, segmentSize: Long, exSize: Long, inputStream: InputStream, downloadListener: DownloadListener) {
         val thread = threadNum - 1
         for (i in 0..thread) {
 
@@ -58,35 +76,69 @@ class DownloadTaskSchedule(threadNum: Int) : ExeProgressCalc {
                     url,
                     segmentSize,
                     exSize,
-                    0,
+                    sofar,
                     if (i == 0) inputStream else null,
                     i,
                     mFileSize,
                     mThreadNum,
                     mIsSupportMulti,
                     this,
-                    downloadListener)
+                    downloadListener,
+                    mPath,
+                    mDownloadId)
 
             mList.add(downloadRunnable)
         }
 
         for (downloadRunnable in mList) {
-            mThreadPool.execute(downloadRunnable)
+            AutoAdjustThreadPool.execute(downloadRunnable)
         }
     }
 
     private fun startAync(url: String, downloadListener: DownloadListener) {
         synchronized(lock = mList) {
             createFile()
+            mDownloadId = DownloadUtils.generateId(url, mPath).toLong()
 
-            val inputStream = handlerTaskParam(url)
-            val threadNum = if (mIsSupportMulti) mThreadNum else 1
-            val exSize = mFileSize % threadNum
-            val segmentSize = (mFileSize - exSize) / threadNum
+            initDatabaseInfo()
 
-            Log.i("vanda", "mFileSize = $mFileSize exSize = $exSize  segmentSize = $segmentSize")
+            val threadInfos = findThreadInfo(mDownloadId)
 
-            exeTask(threadNum, url,  segmentSize, exSize, inputStream, downloadListener)
+            if (threadInfos.size == 0) {
+                val inputStream = handlerTaskParam(url)
+                val threadNum = if (mIsSupportMulti) mThreadNum else 1
+                val exSize = mFileSize % threadNum
+                val segmentSize = (mFileSize - exSize) / threadNum
+
+                Log.i("vanda", "mFileSize = $mFileSize exSize = $exSize  segmentSize = $segmentSize")
+
+                exeTask(threadNum, url, 0, segmentSize, exSize, inputStream, downloadListener)
+            } else {
+                mThreadNum = threadInfos.size
+                for (threadinfo in threadInfos) {
+                    val downloadRunnable = DownloadRunnable(
+                            url,
+                            threadinfo.segment,
+                            threadinfo.extSize,
+                            threadinfo.sofar,
+                            null,
+                            threadinfo.threadId,
+                            threadinfo.total,
+                            threadInfos.size,
+                            true,
+                            this,
+                            downloadListener,
+                            mPath,
+                            threadinfo.downloadFileId)
+
+                    mList.add(downloadRunnable)
+                }
+
+                for (downloadRunnable in mList) {
+                    AutoAdjustThreadPool.execute(downloadRunnable)
+                }
+
+            }
         }
     }
 

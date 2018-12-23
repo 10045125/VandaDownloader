@@ -1,6 +1,8 @@
 package vanda.wzl.vandadownloader
 
-interface ExeProgressCalc {
+import vanda.wzl.vandadownloader.database.RemarkPointSql
+
+interface ExeProgressCalc : RemarkPointSql {
     fun exeProgressCalc(): Long
     fun allComplete(): Boolean
     fun speedIncrement(): String
