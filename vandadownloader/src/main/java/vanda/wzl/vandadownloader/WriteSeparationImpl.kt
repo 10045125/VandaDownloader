@@ -72,11 +72,11 @@ internal class WriteSeparationImpl(
         try {
             mQuarkBufferedSink.emit()
 
-            val intval = System.currentTimeMillis() - mTimes[0] + 1
+            val intval = System.currentTimeMillis() - mTimes[0]
             if (status == OnStatus.COMPLETE || intval > progressIntval()) {
 
                 val curSofar = exeProgressCalc?.let { exeProgressCalc!!.sofar(threadId) } ?: 0
-                val mSpeedIncrement = (curSofar - mTimes[1]) * ONE_SECEND_TIME / intval
+                val mSpeedIncrement = (curSofar - mTimes[1]) * ONE_SECEND_TIME / (intval + 1)
 
                 mTimes[1] = curSofar
                 mTimes[0] = System.currentTimeMillis()

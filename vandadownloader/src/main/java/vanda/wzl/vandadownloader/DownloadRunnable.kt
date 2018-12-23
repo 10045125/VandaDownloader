@@ -38,6 +38,7 @@ class DownloadRunnable(
     private var mTimes = Array(2) { 0L }
     private var mIsCancel: Boolean = false
     private var mStartPosition = -1L
+    private val mInitStartPosition: Long?
     private var mEndPosition = -1L
     private var mTotal = -1L
     private var mIsComplete = false
@@ -45,6 +46,7 @@ class DownloadRunnable(
 
     init {
         mTotal = mFileSize
+        mInitStartPosition = calcStartPosition()
         calcEndPosition()
         mSeparationChunkSize = if (mThreadSerialNumber == (mThreadNumber - 1)) {
             mSegmentSize + mExtSize
@@ -62,12 +64,14 @@ class DownloadRunnable(
             return RandomAccessFile(file, "rw")
         }
 
-    private fun calcStartPosition() {
+    private fun calcStartPosition(): Long {
         mStartPosition = if (mStartPosition != -1L) {
             mStartPosition + mSofar
         } else {
             if (mSegmentSize > 0) mThreadSerialNumber * mSegmentSize + mSofar else -1
         }
+        mSofar = 0
+        return mStartPosition
     }
 
     private fun calcEndPosition() {
@@ -85,7 +89,7 @@ class DownloadRunnable(
     }
 
     override fun sofar(): Long {
-        return mSofar
+        return mStartPosition + mSofar - mInitStartPosition!!
     }
 
     override fun complete(): Boolean {
@@ -101,6 +105,11 @@ class DownloadRunnable(
             }
 
             calcStartPosition()
+
+            if (startPosition() > 0 && endPosition() > 0 && startPosition() >= endPosition()) {
+                mIsComplete = true
+                break
+            }
 
             if (mInputStream != null && mThreadSerialNumber == 0) {
                 fetch(mInputStream!!)
@@ -150,7 +159,6 @@ class DownloadRunnable(
 
         try {
 
-            sink.emit()
             buffer = sink.buffer
             var len: Long
             len = source!!.read(buffer, BUFFER_SIZE)
@@ -183,13 +191,11 @@ class DownloadRunnable(
             }
         } catch (e: IOException) {
             e.printStackTrace()
-
-
         }
     }
 
     private fun isComplete(): Boolean {
-        return mSofar >= mSeparationChunkSize
+        return sofar() >= mSeparationChunkSize
     }
 
     private fun isChunk(): Boolean {
