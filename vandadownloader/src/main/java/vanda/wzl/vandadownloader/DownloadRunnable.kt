@@ -23,6 +23,7 @@ class DownloadRunnable(
         private val mThreadSerialNumber: Int,
         private val mFileSize: Long,
         private val mThreadNumber: Int,
+        private val mIsSupportMulti: Boolean,
         private val mExeProgressCalc: ExeProgressCalc,
         private val mDownloadListener: DownloadListener
 ) : ExeRunnable {
@@ -65,10 +66,14 @@ class DownloadRunnable(
         }
 
     private fun calcStartPosition(): Long {
-        mStartPosition = if (mStartPosition != -1L) {
-            mStartPosition + mSofar
+        mStartPosition = if (isChunk()) {
+            0
         } else {
-            if (mSegmentSize > 0) mThreadSerialNumber * mSegmentSize + mSofar else -1
+            if (mStartPosition != -1L) {
+                mStartPosition + mSofar
+            } else {
+                if (mSegmentSize > 0) mThreadSerialNumber * mSegmentSize + mSofar else -1
+            }
         }
         mSofar = 0
         return mStartPosition
@@ -115,7 +120,7 @@ class DownloadRunnable(
                 fetch(mInputStream!!)
             } else {
                 val mRequestBuilder = Request.Builder()
-                if (startPosition() >= 0) {
+                if (!isChunk() && startPosition() >= 0) {
                     val range = "bytes=${startPosition()}-" + if (mThreadSerialNumber == mThreadNumber - 1) "" else endPosition()
                     Log.i("vanda", "range = $range")
                     mRequestBuilder.addHeader("Range", range)
@@ -168,7 +173,7 @@ class DownloadRunnable(
                 onCancel()
 
                 if (mSegmentSize > 0) {
-                    mIsComplete = isComplete()
+                    mIsComplete = sofar() >= mSeparationChunkSize
                 }
 
                 handleAyncData(writeSeparation!!, mSofar, if (mIsComplete) OnStatus.COMPLETE else OnStatus.PROGRESS)
@@ -199,7 +204,7 @@ class DownloadRunnable(
     }
 
     private fun isChunk(): Boolean {
-        return mSegmentSize < 0
+        return !mIsSupportMulti
     }
 
     private fun handleAyncData(writeSeparation: WriteSeparation, sofar: Long, status: Int) {

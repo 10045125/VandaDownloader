@@ -17,8 +17,9 @@ import vanda.wzl.vandadownloader.util.SpeedUtils
 
 class MainActivity : AppCompatActivity(), DownloadListener {
 
-    private val url = "http://dlied5.myapp.com/myapp/1104466820/sgame/2017_com.tencent.tmgp.sgame_h177_1.42.1.6_a6157f.apk"
-//    private val url: String = "https://dldir1.qq.com/weixin/android/weixin673android1360.apk"
+    //    private var url = "http://dlied5.myapp.com/myapp/1104466820/sgame/2017_com.tencent.tmgp.sgame_h177_1.42.1.6_a6157f.apk"
+    private val url: String = "https://dldir1.qq.com/weixin/android/weixin673android1360.apk"
+//    private val url = "https://aq.qq.com/cn2/manage/mbtoken/mbtoken_download?Android=1&source_id=2886"
 
     private var breadcrumbsView: BreadcrumbsView? = null
     private var mTextViewTitle: TextView? = null
@@ -97,7 +98,7 @@ class MainActivity : AppCompatActivity(), DownloadListener {
         breadcrumbsView!!.nextStep(threadId, java.lang.Float.valueOf(percentChild))
         mTextViewProgress!!.text = String.format("%s/%s", SpeedUtils.formatSize(sofar), SpeedUtils.formatSize(total))
         mTextViewSpeed!!.text = String.format("%s/s", speed)
-        mTextViewTime!!.text = "${(sofar * 100 /total).toInt()}%"
+        mTextViewTime!!.text = "${(sofar * 100 / total).toInt()}%"
 
         val itemData = mAdapter!!.getItemData(threadId)
         itemData.title = "Segment$threadId (${SpeedUtils.formatSize(threadId * totalChild)} ~ ${SpeedUtils.formatSize((threadId + 1) * totalChild)})"

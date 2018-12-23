@@ -23,7 +23,9 @@ class RandomAcessFileOutputStream : OutputStream() {
 
     fun updateOutputStream(randomAccessFile: RandomAccessFile, seek: Long): RandomAcessFileOutputStream {
         mRandomAccessFile = randomAccessFile
-        mRandomAccessFile!!.seek(seek)
+        if (seek > 0) {
+            mRandomAccessFile!!.seek(seek)
+        }
         return this
     }
 

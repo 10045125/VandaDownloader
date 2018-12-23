@@ -22,7 +22,7 @@ class DownloadTaskSchedule(threadNum: Int) : ExeProgressCalc {
     private val mList = ArrayList<ExeRunnable>()
     private var mThreadPool = Executors.newFixedThreadPool(threadNum + 1)
     private var mFileSize: Long = -1
-    private var mIsSupportMutil: Boolean = false
+    private var mIsSupportMulti: Boolean = false
     private var mCurSofar = 0L
     private var mSpeedIncrement = 0L
     private var mTime = System.currentTimeMillis()
@@ -37,7 +37,7 @@ class DownloadTaskSchedule(threadNum: Int) : ExeProgressCalc {
         val mProviderNetFileType = ProviderNetFileTypeImpl(url)
         val inputStream = mProviderNetFileType.firstIntactInputStream()
         mFileSize = mProviderNetFileType.fileSize()
-        mIsSupportMutil = mProviderNetFileType.isSupportMutil()
+        mIsSupportMulti = mProviderNetFileType.isSupportMulti()
         return inputStream
     }
 
@@ -63,6 +63,7 @@ class DownloadTaskSchedule(threadNum: Int) : ExeProgressCalc {
                     i,
                     mFileSize,
                     mThreadNum,
+                    mIsSupportMulti,
                     this,
                     downloadListener)
 
@@ -79,13 +80,13 @@ class DownloadTaskSchedule(threadNum: Int) : ExeProgressCalc {
             createFile()
 
             val inputStream = handlerTaskParam(url)
-            val exSize = mFileSize % mThreadNum
-            val segmentSize = (mFileSize - exSize) / mThreadNum
-            val threadNum = if (mIsSupportMutil) mThreadNum else 1
+            val threadNum = if (mIsSupportMulti) mThreadNum else 1
+            val exSize = mFileSize % threadNum
+            val segmentSize = (mFileSize - exSize) / threadNum
 
             Log.i("vanda", "mFileSize = $mFileSize exSize = $exSize  segmentSize = $segmentSize")
 
-            exeTask(threadNum, url, segmentSize, exSize, inputStream, downloadListener)
+            exeTask(threadNum, url,  segmentSize, exSize, inputStream, downloadListener)
         }
     }
 

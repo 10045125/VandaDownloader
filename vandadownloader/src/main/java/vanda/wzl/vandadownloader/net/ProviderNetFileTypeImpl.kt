@@ -10,19 +10,19 @@ import java.net.HttpURLConnection
 class ProviderNetFileTypeImpl(url: String) : ProviderNetFileType() {
 
     private var mIsSupportMultiThread: Boolean = false
-    private var mFileSize: Long = -1
+    private var mFileSize: Long? = -1
     private var mInputStream: InputStream? = null
 
     init {
         mInputStream = analysisFileAttributes(url)
     }
 
-    override fun isSupportMutil(): Boolean {
+    override fun isSupportMulti(): Boolean {
         return mIsSupportMultiThread
     }
 
     override fun fileSize(): Long {
-        return mFileSize
+        return mFileSize?.let { mFileSize } ?: -1
     }
 
     override fun firstIntactInputStream(): InputStream {
@@ -46,19 +46,20 @@ class ProviderNetFileTypeImpl(url: String) : ProviderNetFileType() {
             mIsSupportMultiThread = false
         } else {
             mIsSupportMultiThread = code == HttpURLConnection.HTTP_PARTIAL && !TextUtils.isEmpty(mResponse.header("Content-Range"))
-            val contentLength: Long? = mResponse.header("Content-Length")?.toLong()
-            Log.e("vanda", "transferEncoding=$transferEncoding    content-length=$contentLength")
+            mFileSize = mResponse.header("Content-Length")?.toLong()
+            Log.e("vanda", "transferEncoding=$transferEncoding    content-length=$mFileSize")
         }
 
         Log.e("vanda", "mIsSupportMultiThread=$mIsSupportMultiThread")
 
-        if (TextUtils.isEmpty(transferEncoding)) {
+        if (mIsSupportMultiThread && TextUtils.isEmpty(transferEncoding) && !mResponse.header("Content-Length").isNullOrBlank()) {
             mRequestBuilder.addHeader("Range", "bytes=0-")
             request = mRequestBuilder.url(url).get().build()
             mCall = OkHttpProxy.instance.newCall(request)
             mResponse = mCall.execute()
-            mFileSize = mResponse.header("Content-Length")?.toLong()!!
+            mFileSize = mResponse.header("Content-Length")?.toLong()
         }
+
         return mResponse.body()?.byteStream()
     }
 }
