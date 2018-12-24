@@ -3,6 +3,8 @@ package vanda.wzl.vandadownloader
 import android.content.Context
 import android.os.Environment
 import android.util.Log
+import quarkokio.Segment
+import quarkokio.SegmentPool
 import vanda.wzl.vandadownloader.database.RemarkMultiThreadPointSqlEntry
 import vanda.wzl.vandadownloader.database.RemarkPointSql
 import vanda.wzl.vandadownloader.database.RemarkPointSqlEntry
@@ -36,6 +38,11 @@ class DownloadTaskSchedule(threadNum: Int, context: Context) : AbstractDownloadT
     private var mPath: String = ""
     private var mDownloadId: Long = -1L
     private var mUrl: String = ""
+
+    init {
+        SegmentPool.MAX_SIZE = 1024 * 1024 * 3
+        Segment.SIZE = 1024 * 256
+    }
 
     fun start(url: String, downloadListener: DownloadListener) {
         AutoAdjustThreadPool.execute(Runnable {

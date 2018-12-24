@@ -1,13 +1,12 @@
 package vanda.wzl.vandadownloader
 
-import android.os.Environment
+import android.os.SystemClock
 import android.util.Log
 import okhttp3.Request
 import quarkokio.buffer
 import quarkokio.sink
 import quarkokio.source
 import vanda.wzl.vandadownloader.database.RemarkMultiThreadPointSqlEntry
-import vanda.wzl.vandadownloader.database.RemarkPointSql
 import vanda.wzl.vandadownloader.io.file.io.RandomAcessFileOutputStream
 import vanda.wzl.vandadownloader.io.file.separation.GlobalSingleThreadWriteFileStream
 import vanda.wzl.vandadownloader.io.file.separation.WriteSeparation
@@ -23,7 +22,7 @@ class DownloadRunnable(
         private var mSofar: Long,
         private var mInputStream: InputStream?,
         private val mThreadSerialNumber: Int,
-        private val mFileSize: Long,
+        mFileSize: Long,
         private val mThreadNumber: Int,
         private val mIsSupportMulti: Boolean,
         private val mExeProgressCalc: ExeProgressCalc,
@@ -34,6 +33,8 @@ class DownloadRunnable(
 
     companion object {
         private const val BUFFER_SIZE = 1024 * 8L
+        private const val MIN_WRITE_BUFFER_SIZE = 1024 * 256
+        private const val MIN_PROGRESS_TIME = 1000 //ms
     }
 
     private var mRandomAcessFileOutputStream: RandomAcessFileOutputStream = RandomAcessFileOutputStream()
@@ -44,6 +45,7 @@ class DownloadRunnable(
     private var mIsCancel: Boolean = false
     private var mStartPosition = -1L
     private val mInitStartPosition: Long?
+    private var mOriginStartPosition: Long = 0
     private var mEndPosition = -1L
     private var mTotal = -1L
     private var mIsComplete = false
@@ -85,7 +87,8 @@ class DownloadRunnable(
             if (mStartPosition != -1L) {
                 mStartPosition + mSofar
             } else {
-                if (mSegmentSize > 0) mThreadSerialNumber * mSegmentSize + mSofar else -1
+                mOriginStartPosition = if (mSegmentSize > 0) mThreadSerialNumber * mSegmentSize + mSofar else -1
+                mOriginStartPosition
             }
         }
         mSofar = 0
@@ -156,30 +159,25 @@ class DownloadRunnable(
     }
 
     private fun fetch(inputStream: InputStream) {
+        val outputStream: OutputStream
         val source: quarkokio.Source?
-        var sink: quarkokio.BufferedSink
         var buffer: quarkokio.Buffer
-
         val seek = startPosition()
-        mRandomAcessFileOutputStream.updateOutputStream(mRandomAccessFile, seek)
+        val produceWriteSeparationBuffer = Array<WriteSeparation?>(1) { null }
 
-        val outputStream: OutputStream = mRandomAcessFileOutputStream
+        mRandomAcessFileOutputStream.updateOutputStream(mRandomAccessFile, seek)
+        outputStream = mRandomAcessFileOutputStream
 
         source = inputStream.source()
 
-        if (mQuarkBufferedSinkQueue.size == 0) {
-            mQuarkBufferedSinkQueue.offer(WriteSeparationImpl(mTimes, outputStream.sink().buffer(), source, outputStream, mQuarkBufferedSinkQueue, mQuarkBufferedSinkListWait))
-        }
-
-        var writeSeparation: WriteSeparation? = mQuarkBufferedSinkQueue.poll()!!
-        sink = writeSeparation!!.quarkBufferSink()
-        mQuarkBufferedSinkListWait.offer(writeSeparation)
-
         try {
-
-            buffer = sink.buffer
+            val alreadyDownloadSofar = alreadyDownloadSofar()
             var len: Long
-            len = source!!.read(buffer, BUFFER_SIZE)
+            var lastUpdateBytes: Long = 0
+            var lastUpdateTime: Long = 0
+
+            buffer = produceWriteSeparation(produceWriteSeparationBuffer, outputStream, source)
+            len = source.read(buffer, BUFFER_SIZE)
 
             while (len != -1L) {
                 mSofar += len
@@ -189,27 +187,40 @@ class DownloadRunnable(
                     mIsComplete = sofar() >= mSeparationChunkSize
                 }
 
-                handleAyncData(writeSeparation!!, mSofar, if (mIsComplete) OnStatus.COMPLETE else OnStatus.PROGRESS)
+                val now = SystemClock.elapsedRealtime()
+                val bytesDelta = mSofar - lastUpdateBytes
+                val timeDelta = now - lastUpdateTime
+
+                if (mIsComplete || bytesDelta >= MIN_WRITE_BUFFER_SIZE || timeDelta >= MIN_PROGRESS_TIME) {
+                    handleAyncData(produceWriteSeparationBuffer[0]!!, mSofar + alreadyDownloadSofar, if (mIsComplete) OnStatus.COMPLETE else OnStatus.PROGRESS)
+                    lastUpdateBytes = mSofar
+                    lastUpdateTime = now
+                    buffer = produceWriteSeparation(produceWriteSeparationBuffer, outputStream, source)
+                }
 
                 if (mIsComplete || mSegmentSize > 0 && mThreadSerialNumber == 0 && mSofar >= mSegmentSize) {
                     break
                 }
 
-                writeSeparation = mQuarkBufferedSinkQueue.poll()
-                writeSeparation = writeSeparation?.let { writeSeparation } ?: WriteSeparationImpl(mTimes, outputStream.sink().buffer(), source, outputStream, mQuarkBufferedSinkQueue, mQuarkBufferedSinkListWait)
-                mQuarkBufferedSinkListWait.offer(writeSeparation)
-                sink = writeSeparation!!.quarkBufferSink()
-                buffer = sink.buffer
-                len = source!!.read(buffer, BUFFER_SIZE)
+                len = source.read(buffer, BUFFER_SIZE)
 
                 if (len < 0 && mSegmentSize < 0) {
                     mIsComplete = true
-                    handleAyncData(writeSeparation!!, mSofar, OnStatus.COMPLETE)
+                    handleAyncData(produceWriteSeparationBuffer[0]!!, mSofar, OnStatus.COMPLETE)
                 }
             }
         } catch (e: IOException) {
             e.printStackTrace()
         }
+    }
+
+
+    private fun produceWriteSeparation(produceWriteSeparationBuffer: Array<WriteSeparation?>, outputStream: OutputStream, source: quarkokio.Source?): quarkokio.Buffer {
+        var writeSeparation = mQuarkBufferedSinkQueue.poll()
+        writeSeparation = writeSeparation?.let { writeSeparation } ?: WriteSeparationImpl(mTimes, outputStream.sink().buffer(), source, outputStream, mQuarkBufferedSinkQueue, mQuarkBufferedSinkListWait)
+        mQuarkBufferedSinkListWait.offer(writeSeparation)
+        produceWriteSeparationBuffer[0] = writeSeparation
+        return writeSeparation.quarkBufferSink().buffer
     }
 
     private fun isComplete(): Boolean {
@@ -220,12 +231,16 @@ class DownloadRunnable(
         return !mIsSupportMulti
     }
 
-    private fun handleAyncData(writeSeparation: WriteSeparation, sofar: Long, status: Int) {
-        handleProgressValue(writeSeparation!!, sofar, mTotal, sofar, mThreadSerialNumber, status)
-        GlobalSingleThreadWriteFileStream.ayncWrite(writeSeparation!!)
+    private fun alreadyDownloadSofar(): Long {
+        return startPosition() - mOriginStartPosition
     }
 
-    private fun handleProgressValue(writeSeparation: WriteSeparation, sofar: Long, total: Long, id: Long, threadId: Int, status: Int) {
+    private fun handleAyncData(writeSeparation: WriteSeparation, sofar: Long, status: Int) {
+        handleProgressValue(writeSeparation, sofar, mTotal, mThreadSerialNumber, status)
+        GlobalSingleThreadWriteFileStream.ayncWrite(writeSeparation)
+    }
+
+    private fun handleProgressValue(writeSeparation: WriteSeparation, sofar: Long, total: Long, threadId: Int, status: Int) {
         writeSeparation.sofar(sofar)
         writeSeparation.total(total)
         writeSeparation.id(mDownloadId)

@@ -1,12 +1,17 @@
 package vanda.vandadownloader
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.support.v4.app.ActivityCompat
+import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.AppCompatSeekBar
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.view.View
 import android.widget.Button
 import android.widget.SeekBar
 import android.widget.TextView
@@ -17,7 +22,7 @@ import vanda.wzl.vandadownloader.util.SpeedUtils
 
 class MainActivity : AppCompatActivity(), DownloadListener {
 
-//        private var url = "http://dlied5.myapp.com/myapp/1104466820/sgame/2017_com.tencent.tmgp.sgame_h177_1.42.1.6_a6157f.apk"
+//    private var url = "http://dlied5.myapp.com/myapp/1104466820/sgame/2017_com.tencent.tmgp.sgame_h177_1.42.1.6_a6157f.apk"
     private val url: String = "https://dldir1.qq.com/weixin/android/weixin673android1360.apk"
 //    private val url = "https://aq.qq.com/cn2/manage/mbtoken/mbtoken_download?Android=1&source_id=2886"
 
@@ -80,6 +85,8 @@ class MainActivity : AppCompatActivity(), DownloadListener {
                 start()
             }
         }
+
+        pp()
     }
 
     fun start() {
@@ -89,8 +96,7 @@ class MainActivity : AppCompatActivity(), DownloadListener {
     }
 
     private fun testDownload() {
-        val downloadTaskSchedule = DownloadTaskSchedule(mThreadNum, this)
-        downloadTaskSchedule.start(url, this)
+        DownloadTaskSchedule(mThreadNum, this).start(url, this)
     }
 
     @SuppressLint("SetTextI18n")
@@ -132,5 +138,10 @@ class MainActivity : AppCompatActivity(), DownloadListener {
 
     }
 
+    private fun pp() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED)) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_PHONE_STATE, Manifest.permission.SYSTEM_ALERT_WINDOW), 199)
+        }
+    }
 
 }

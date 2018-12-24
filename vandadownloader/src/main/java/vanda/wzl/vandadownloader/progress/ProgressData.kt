@@ -76,7 +76,7 @@ class ProgressData {
     }
 
     companion object {
-        private val MAX_POOL_SIZE = 300
+        private const val MAX_POOL_SIZE = 300
         private val sPoolSync = Any()
         private var sPoolSize = 0
         private var sPool: ProgressData? = null
