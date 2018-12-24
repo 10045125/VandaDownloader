@@ -1,5 +1,5 @@
-# QuarkDownloader
-重新设计夸克浏览器的下载模块，更加清晰的特性设计。
+# VandaDownloader
+强大的下载特性，更加清晰的特性设计。
 
 #### 下载特性 
 >读写分离／非分离 </br>
@@ -13,12 +13,12 @@
 
 #### Blog 文章
 
-[QuarkDownloader 文章](http://wuzhonglian.com/2018/08/26/QuarkDownloader-%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB%E8%AE%BE%E7%BD%AE%E5%8E%9F%E5%9E%8B/#more)
+[VandaDownloader 文章](http://wuzhonglian.com/2018/08/26/QuarkDownloader-%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB%E8%AE%BE%E7%BD%AE%E5%8E%9F%E5%9E%8B/#more)
 
 #### 简易流程图
 
-![quarkdownloader](https://github.com/10045125/QuarkDownloader/blob/master/pic/callback.png "回调")
-![quarkdownloader](https://github.com/10045125/QuarkDownloader/blob/master/pic/download.png "读写分离原理")
+![vandadownloader](https://github.com/10045125/QuarkDownloader/blob/master/pic/callback.png "回调")
+![vandadownloader](https://github.com/10045125/QuarkDownloader/blob/master/pic/download.png "读写分离原理")
 
 #### Demo
 
