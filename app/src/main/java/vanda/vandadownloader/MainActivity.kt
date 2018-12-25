@@ -26,6 +26,8 @@ class MainActivity : AppCompatActivity() {
 //    private var url = "http://dlied5.myapp.com/myapp/1104466820/sgame/2017_com.tencent.tmgp.sgame_h177_1.42.1.6_a6157f.apk"
     private val url: String = "https://dldir1.qq.com/weixin/android/weixin673android1360.apk"
 //    private val url = "https://aq.qq.com/cn2/manage/mbtoken/mbtoken_download?Android=1&source_id=2886"
+//    private val url = "https://aq.qq.com/cn2/manage/mbtoken/mbtoken_download?Android=1&source_id=2886"
+//    private val url = "http://cn.club.vmall.com/forum.php?mod=attachment&aid=MjkzMzgwOXxiODViYzM3MnwxNDg5NTEyMzcxfDcxMjE1OTh8NTc4MjA3Mw%3D%3D"
 
     private var breadcrumbsView: BreadcrumbsView? = null
     private var mTextViewTitle: TextView? = null
@@ -37,6 +39,7 @@ class MainActivity : AppCompatActivity() {
 
     private var mBtn: Button? = null
     private var mBtnClean: Button? = null
+    private var mBtnDelete: Button? = null
 
     private var mAdapter: RecyclerViewAdapter? = null
     private var mRecyclerView: RecyclerView? = null
@@ -52,6 +55,7 @@ class MainActivity : AppCompatActivity() {
         mTextViewThreadNum = findViewById(R.id.numthread)
         mBtn = findViewById(R.id.bt_prev)
         mBtnClean = findViewById(R.id.bt_next)
+        mBtnDelete = findViewById(R.id.bt_delete)
         breadcrumbsView = findViewById(R.id.breadcrumbs)
         mTextViewTitle = findViewById(R.id.title)
         mTextViewTitle!!.text = "王者荣耀.apk"
@@ -81,7 +85,7 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        mAppCompatSeekBar!!.setProgress(3)
+        mAppCompatSeekBar!!.progress = 3
 
 
         mBtn!!.setOnClickListener {
@@ -99,6 +103,10 @@ class MainActivity : AppCompatActivity() {
 
         mBtnClean!!.setOnClickListener {
             downloadTaskSchedule?.clean()
+        }
+
+        mBtnDelete!!.setOnClickListener {
+            downloadTaskSchedule?.deletefile()
         }
 
         pp()

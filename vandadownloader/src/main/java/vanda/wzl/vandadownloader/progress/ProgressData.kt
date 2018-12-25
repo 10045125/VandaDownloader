@@ -21,6 +21,7 @@ class ProgressData {
     var percent = "0.00"
     var percentChild = "0.00"
     var threadId: Int = 0
+    var supportMultiThread = false
 
     var segment: Long = 0
     var extSize: Long = 0
@@ -37,7 +38,7 @@ class ProgressData {
     private var remarkMultiThreadPointSqlEntry: RemarkMultiThreadPointSqlEntry = RemarkMultiThreadPointSqlEntry()
 
     fun fillingRemarkPointSqlEntry(): RemarkPointSqlEntry {
-        remarkPointSqlEntry.fillingValue(id, url, path, sofar, total, status)
+        remarkPointSqlEntry.fillingValue(id, url, path, sofar, total, status, supportMultiThread)
         return remarkPointSqlEntry
     }
 
@@ -61,6 +62,7 @@ class ProgressData {
         segment = 0
         extSize = 0
         allComplete = false
+        supportMultiThread = false
 
         status = -1
         downloadListener = null

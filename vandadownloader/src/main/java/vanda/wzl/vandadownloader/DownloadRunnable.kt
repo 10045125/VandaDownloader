@@ -59,7 +59,7 @@ class DownloadRunnable(
         mSeparationChunkSize = if (mThreadSerialNumber == (mThreadNumber - 1)) mSegmentSize + mExtSize else mSegmentSize
         mInitStartPosition = calcStartPosition()
         calcEndPosition()
-        mIsComplete = !isChunk() &&  (mInitStartPosition - mOriginStartPosition) >= mSeparationChunkSize
+        mIsComplete = !isChunk() && (mInitStartPosition - mOriginStartPosition) >= mSeparationChunkSize
         initDatabase()
     }
 
@@ -97,7 +97,7 @@ class DownloadRunnable(
     }
 
     private fun calcEndPosition() {
-        mEndPosition = (mThreadSerialNumber + 1) * mSegmentSize + if (mThreadSerialNumber == (mThreadNumber - 1)) mExtSize  else 0
+        mEndPosition = (mThreadSerialNumber + 1) * mSegmentSize + if (mThreadSerialNumber == (mThreadNumber - 1)) mExtSize else 0
     }
 
     private fun startPosition(): Long {
@@ -109,7 +109,6 @@ class DownloadRunnable(
     }
 
     override fun sofar(): Long {
-//        return mStartPosition + mSofar - mInitStartPosition!!
         return startPosition() - mOriginStartPosition + mSofar
     }
 
@@ -137,6 +136,9 @@ class DownloadRunnable(
         do {
 
             if (complete() || onCancel()) {
+                if (!isChunk() && complete()) {
+                    WriteSeparation.alreadyComplete(mSeparationChunkSize, mTotal, mSegmentSize, mDownloadId, mThreadSerialNumber, mUrl, mPath, mExtSize, mIsSupportMulti, mExeProgressCalc, mDownloadListener)
+                }
                 break
             }
 
@@ -153,7 +155,7 @@ class DownloadRunnable(
                 fetch(mInputStream!!)
             } else {
                 val mRequestBuilder = Request.Builder()
-                if (!isChunk() && startPosition() >= 0) {
+                if (startPosition() >= 0) {
                     val range = "bytes=${startPosition()}-" + if (mThreadSerialNumber == mThreadNumber - 1) "" else endPosition()
                     Log.i("vanda", "range = $range")
                     mRequestBuilder.addHeader("Range", range)
@@ -201,7 +203,7 @@ class DownloadRunnable(
 
                 val alreadyDownloadSofar = sofar()
 
-                if (!isChunk()) {
+                if (mSegmentSize > 0) {
                     mIsComplete = alreadyDownloadSofar >= mSeparationChunkSize
                 }
 
@@ -227,7 +229,7 @@ class DownloadRunnable(
 
                 len = source.read(buffer, BUFFER_SIZE)
 
-                if (len < 0 && mSegmentSize < 0) {
+                if (len < 0 && mSegmentSize <= 0) {
                     mIsComplete = true
                     handleAyncData(produceWriteSeparationBuffer[0]!!, mSofar, OnStatus.COMPLETE)
                 }
@@ -271,6 +273,7 @@ class DownloadRunnable(
         writeSeparation.extSize(mExtSize)
         writeSeparation.url(mUrl)
         writeSeparation.path(mPath)
+        writeSeparation.supportMultiThread(mIsSupportMulti)
     }
 
     private fun onCancel(): Boolean {

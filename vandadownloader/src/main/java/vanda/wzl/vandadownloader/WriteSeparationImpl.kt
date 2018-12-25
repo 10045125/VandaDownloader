@@ -1,7 +1,5 @@
 package vanda.wzl.vandadownloader
 
-import android.util.Log
-import vanda.wzl.vandadownloader.io.file.io.RandomAcessFileOutputStream
 import vanda.wzl.vandadownloader.io.file.separation.WriteSeparation
 import vanda.wzl.vandadownloader.progress.GlobalSingleThreadHandlerProgress
 import vanda.wzl.vandadownloader.progress.ProgressData
@@ -32,6 +30,7 @@ internal class WriteSeparationImpl(
     private var downloadListener: DownloadListener? = null
     private var url: String = ""
     private var path: String = ""
+    private var supportMultiThread: Boolean = false
 
     override fun time(time: Long) {
         this.time = time
@@ -81,15 +80,36 @@ internal class WriteSeparationImpl(
         this.extSize = extSize
     }
 
+    override fun supportMultiThread(supportMultiThread: Boolean) {
+        this.supportMultiThread = supportMultiThread
+    }
+
     private fun progressIntval(): Int {
         return PROGRESS_INTVAL
+    }
+
+    private fun fillProgressData(speedIncrement: Long) {
+        val progressData = ProgressData.obtain()
+        progressData.sofarChild = sofar
+        progressData.total = total
+        progressData.totalChild = segment
+        progressData.id = id
+        progressData.threadId = threadId
+        progressData.speedChild = SpeedUtils.formatSize(speedIncrement)
+        progressData.status = status
+        progressData.exeProgressCalc = exeProgressCalc
+        progressData.downloadListener = downloadListener
+        progressData.url = url
+        progressData.path = path
+        progressData.segment = segment
+        progressData.extSize = extSize
+        progressData.supportMultiThread = supportMultiThread
+        GlobalSingleThreadHandlerProgress.ayncProgressData(progressData)
     }
 
     override fun onWriteSegmentBytesToStore() {
         try {
             mQuarkBufferedSink.emit()
-//            Log.i("vanda", "threadId = $threadId point = ${(mOutputStream as RandomAcessFileOutputStream).filePointer()}")
-
             val intval = System.currentTimeMillis() - mTimes[0]
             if (status != OnStatus.PROGRESS || intval > progressIntval()) {
 
@@ -99,29 +119,13 @@ internal class WriteSeparationImpl(
                 mTimes[1] = curSofar
                 mTimes[0] = System.currentTimeMillis()
 
-                if (status == OnStatus.COMPLETE) {
+                if (status == OnStatus.COMPLETE || status == OnStatus.PAUSE) {
                     mSource?.close()
                     mOutputStream?.close()
                 }
 
-                val progressData = ProgressData.obtain()
-                progressData.sofarChild = sofar
-                progressData.total = total
-                progressData.totalChild = segment
-                progressData.id = id
-                progressData.threadId = threadId
-                progressData.speedChild = SpeedUtils.formatSize(mSpeedIncrement)
-                progressData.status = status
-                progressData.exeProgressCalc = exeProgressCalc
-                progressData.downloadListener = downloadListener
-                progressData.url = url
-                progressData.path = path
-                progressData.segment = segment
-                progressData.extSize = extSize
-
-                GlobalSingleThreadHandlerProgress.ayncProgressData(progressData)
+                fillProgressData(mSpeedIncrement)
             }
-
         } catch (e: IOException) {
             e.printStackTrace()
         }

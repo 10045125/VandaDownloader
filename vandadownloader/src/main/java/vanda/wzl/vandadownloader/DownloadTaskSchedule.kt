@@ -76,7 +76,7 @@ class DownloadTaskSchedule(threadNum: Int, context: Context) : AbstractDownloadT
     private fun initDatabaseInfo() {
         if (!remarkPointSqlEntry(mDownloadId).invalid) {
             val remarkPointSqlEntry = RemarkPointSqlEntry()
-            remarkPointSqlEntry.fillingValue(mDownloadId, mUrl, mPath, 0, mFileSize, OnStatus.INVALID)
+            remarkPointSqlEntry.fillingValue(mDownloadId, mUrl, mPath, 0, mFileSize, OnStatus.INVALID, mIsSupportMulti)
             insert(remarkPointSqlEntry)
         }
     }
@@ -114,13 +114,12 @@ class DownloadTaskSchedule(threadNum: Int, context: Context) : AbstractDownloadT
 
         createFile()
         mDownloadId = DownloadUtils.generateId(url, mPath).toLong()
-
         initDatabaseInfo()
-
         val threadInfos = findThreadInfo(mDownloadId)
 
         if (threadInfos.size == 0) {
             val inputStream = handlerTaskParam(url)
+            update(RemarkPointSqlEntry().fillingValue(mDownloadId, url, mPath, 0, mFileSize, OnStatus.INVALID, mIsSupportMulti))
             val threadNum = if (mIsSupportMulti) mThreadNum else 1
             val exSize = mFileSize % threadNum
             val segmentSize = (mFileSize - exSize) / threadNum
@@ -130,6 +129,7 @@ class DownloadTaskSchedule(threadNum: Int, context: Context) : AbstractDownloadT
             exeTask(threadNum, url, 0, segmentSize, exSize, inputStream, downloadListener)
         } else {
             mThreadNum = threadInfos.size
+            mIsSupportMulti = remarkPointSqlEntry(mDownloadId).supportMultiThread()
             for (threadinfo in threadInfos) {
                 val downloadRunnable = DownloadRunnable(
                         url,
@@ -140,7 +140,7 @@ class DownloadTaskSchedule(threadNum: Int, context: Context) : AbstractDownloadT
                         threadinfo.threadId,
                         threadinfo.total,
                         threadInfos.size,
-                        true,
+                        mIsSupportMulti,
                         this,
                         downloadListener,
                         mPath,
@@ -206,5 +206,13 @@ class DownloadTaskSchedule(threadNum: Int, context: Context) : AbstractDownloadT
     fun clean() {
         delete(mDownloadId)
         deleteThreadInfo(mDownloadId)
+    }
+
+    fun deletefile() {
+        mPath = Environment.getExternalStorageDirectory().absolutePath + "/weixin.apk"
+        val file = File(mPath)
+        if (file.exists()) {
+            file.delete()
+        }
     }
 }

@@ -136,7 +136,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:orientation="horizontal"
-            android:weightSum="2">
+            android:weightSum="3">
 
             <Button
                 android:id="@+id/bt_prev"
@@ -154,6 +154,15 @@
                 android:layout_weight="1"
                 android:backgroundTint="@color/colorVisited"
                 android:text="Clean"
+                android:textColor="@color/colorWhite" />
+
+            <Button
+                android:id="@+id/bt_delete"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:backgroundTint="@color/colorVisited"
+                android:text="DeleteFile"
                 android:textColor="@color/colorWhite" />
 
         </LinearLayout>
