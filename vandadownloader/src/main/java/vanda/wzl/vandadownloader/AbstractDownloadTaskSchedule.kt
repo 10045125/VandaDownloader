@@ -44,4 +44,8 @@ abstract class AbstractDownloadTaskSchedule(context: Context) : ExeProgressCalc 
     override fun deleteThreadInfo(downloadId: Long) {
         mRemarkPointSql.deleteThreadInfo(downloadId)
     }
+
+    override fun delete(downloadId: Long) {
+        mRemarkPointSql.delete(downloadId)
+    }
 }

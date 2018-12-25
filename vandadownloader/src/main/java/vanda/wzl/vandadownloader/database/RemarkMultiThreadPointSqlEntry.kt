@@ -2,6 +2,7 @@ package vanda.wzl.vandadownloader.database
 
 import android.content.ContentValues
 import android.database.Cursor
+import android.util.Log
 import vanda.wzl.vandadownloader.status.OnStatus
 import java.lang.Exception
 
@@ -56,6 +57,7 @@ class RemarkMultiThreadPointSqlEntry(var cursor: Cursor?) {
         this.downloadFileId = downloadId
         this.segment = segment
         this.extSize = extSize
+        Log.i("vanda", "fillingValue threadId = $threadId segment = $segment sofar = $sofar startPoint = ${threadId * segment + sofar}  extSize = $extSize")
         invalid = true
     }
 

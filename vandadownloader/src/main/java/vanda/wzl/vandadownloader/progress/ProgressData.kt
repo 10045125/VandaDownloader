@@ -25,6 +25,8 @@ class ProgressData {
     var segment: Long = 0
     var extSize: Long = 0
 
+    var allComplete: Boolean = false
+
     @OnStatus
     var status: Int = 0
 
@@ -56,6 +58,9 @@ class ProgressData {
         speed = "0KB"
         speedChild = speed
         threadId = 0
+        segment = 0
+        extSize = 0
+        allComplete = false
 
         status = -1
         downloadListener = null

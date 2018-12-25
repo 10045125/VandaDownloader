@@ -110,6 +110,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="0dp"
+                android:progress="3"
                 android:layout_marginBottom="8dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintHorizontal_bias="0.0"
@@ -121,14 +122,41 @@
         </LinearLayout>
 
 
-        <Button
-            android:id="@+id/bt_prev"
-            android:layout_width="wrap_content"
+        <!--<Button-->
+        <!--android:id="@+id/bt_prev"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:backgroundTint="@color/colorVisited"-->
+        <!--android:text="Start"-->
+        <!--android:textSize="12sp"-->
+        <!--android:textColor="@color/colorWhite" />-->
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:backgroundTint="@color/colorVisited"
-            android:text="Start"
-            android:textSize="12sp"
-            android:textColor="@color/colorWhite" />
+            android:layout_alignParentBottom="true"
+            android:orientation="horizontal"
+            android:weightSum="2">
+
+            <Button
+                android:id="@+id/bt_prev"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:backgroundTint="@color/colorVisited"
+                android:text="Start"
+                android:textColor="@color/colorWhite" />
+
+            <Button
+                android:id="@+id/bt_next"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:backgroundTint="@color/colorVisited"
+                android:text="Clean"
+                android:textColor="@color/colorWhite" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

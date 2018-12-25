@@ -43,22 +43,23 @@ class DownloadRunnable(
 
     private var mTimes = Array(2) { 0L }
     private var mIsCancel: Boolean = false
+    private var mIsCancelComplete: Boolean = false
     private var mStartPosition = -1L
     private val mInitStartPosition: Long?
-    private var mOriginStartPosition: Long = 0
+    private val mOriginStartPosition: Long
     private var mEndPosition = -1L
     private var mTotal = -1L
     private var mIsComplete = false
-    private var mSeparationChunkSize = 0L
+    private val mSeparationChunkSize: Long
 
     init {
+        Log.i("vanda", "init mSegmentSize = $mSegmentSize extSize = $mExtSize threadId = $mThreadSerialNumber")
         mTotal = mFileSize
+        mOriginStartPosition = if (!isChunk()) mThreadSerialNumber * mSegmentSize else 0
+        mSeparationChunkSize = if (mThreadSerialNumber == (mThreadNumber - 1)) mSegmentSize + mExtSize else mSegmentSize
         mInitStartPosition = calcStartPosition()
         calcEndPosition()
-        mSeparationChunkSize = if (mThreadSerialNumber == (mThreadNumber - 1)) {
-            mSegmentSize + mExtSize
-        } else mSegmentSize
-
+        mIsComplete = !isChunk() &&  (mInitStartPosition - mOriginStartPosition) >= mSeparationChunkSize
         initDatabase()
     }
 
@@ -81,14 +82,14 @@ class DownloadRunnable(
     }
 
     private fun calcStartPosition(): Long {
+        Log.i("vanda", "calcStartPosition mStartPosition = $mStartPosition mSofar = $mSofar")
         mStartPosition = if (isChunk()) {
             0
         } else {
             if (mStartPosition != -1L) {
                 mStartPosition + mSofar
             } else {
-                mOriginStartPosition = if (mSegmentSize > 0) mThreadSerialNumber * mSegmentSize + mSofar else -1
-                mOriginStartPosition
+                mThreadSerialNumber * mSegmentSize + mSofar
             }
         }
         mSofar = 0
@@ -96,9 +97,7 @@ class DownloadRunnable(
     }
 
     private fun calcEndPosition() {
-        mEndPosition = if (mThreadSerialNumber == (mThreadNumber - 1)) {
-            (mThreadSerialNumber + 1) * mSegmentSize + mExtSize
-        } else (mThreadSerialNumber + 1) * mSegmentSize
+        mEndPosition = (mThreadSerialNumber + 1) * mSegmentSize + if (mThreadSerialNumber == (mThreadNumber - 1)) mExtSize  else 0
     }
 
     private fun startPosition(): Long {
@@ -110,24 +109,42 @@ class DownloadRunnable(
     }
 
     override fun sofar(): Long {
-        return mStartPosition + mSofar - mInitStartPosition!!
+//        return mStartPosition + mSofar - mInitStartPosition!!
+        return startPosition() - mOriginStartPosition + mSofar
     }
 
     override fun complete(): Boolean {
         return mIsComplete
     }
 
+    override fun pause() {
+        if (!mIsCancel) {
+            mIsCancelComplete = false
+        }
+        mIsCancel = true
+    }
+
+    override fun pauseComplete() {
+        mIsCancelComplete = true
+    }
+
+    override fun isPauseComplete(): Boolean {
+        return complete() || mIsCancelComplete
+    }
+
     override fun run() {
         Log.i("vanda", "run num = $mThreadSerialNumber  startPosition = ${startPosition()} endPosition= ${endPosition()} mSofar = $mSofar")
         do {
 
-            if (complete()) {
+            if (complete() || onCancel()) {
                 break
             }
 
             calcStartPosition()
 
-            if (startPosition() > 0 && endPosition() > 0 && startPosition() >= endPosition()) {
+            Log.i("vanda", "run num = $mThreadSerialNumber  startPosition = ${startPosition()} endPosition= ${endPosition()} mSofar = $mSofar startPosition() - mOriginStartPosition = ${startPosition() - mOriginStartPosition} mSeparationChunkSize = $mSeparationChunkSize")
+
+            if (startPosition() > 0 && endPosition() > 0 && (startPosition() >= endPosition() || startPosition() - mOriginStartPosition >= mSeparationChunkSize)) {
                 mIsComplete = true
                 break
             }
@@ -163,6 +180,7 @@ class DownloadRunnable(
         val source: quarkokio.Source?
         var buffer: quarkokio.Buffer
         val seek = startPosition()
+
         val produceWriteSeparationBuffer = Array<WriteSeparation?>(1) { null }
 
         mRandomAcessFileOutputStream.updateOutputStream(mRandomAccessFile, seek)
@@ -171,7 +189,6 @@ class DownloadRunnable(
         source = inputStream.source()
 
         try {
-            val alreadyDownloadSofar = alreadyDownloadSofar()
             var len: Long
             var lastUpdateBytes: Long = 0
             var lastUpdateTime: Long = 0
@@ -181,18 +198,24 @@ class DownloadRunnable(
 
             while (len != -1L) {
                 mSofar += len
-                onCancel()
 
-                if (mSegmentSize > 0) {
-                    mIsComplete = sofar() >= mSeparationChunkSize
+                val alreadyDownloadSofar = sofar()
+
+                if (!isChunk()) {
+                    mIsComplete = alreadyDownloadSofar >= mSeparationChunkSize
                 }
 
                 val now = SystemClock.elapsedRealtime()
                 val bytesDelta = mSofar - lastUpdateBytes
                 val timeDelta = now - lastUpdateTime
 
-                if (mIsComplete || bytesDelta >= MIN_WRITE_BUFFER_SIZE || timeDelta >= MIN_PROGRESS_TIME) {
-                    handleAyncData(produceWriteSeparationBuffer[0]!!, mSofar + alreadyDownloadSofar, if (mIsComplete) OnStatus.COMPLETE else OnStatus.PROGRESS)
+                if (mIsComplete || bytesDelta >= MIN_WRITE_BUFFER_SIZE || timeDelta >= MIN_PROGRESS_TIME || onCancel()) {
+                    handleAyncData(produceWriteSeparationBuffer[0]!!, alreadyDownloadSofar, if (mIsComplete) OnStatus.COMPLETE else if (onCancel()) OnStatus.PAUSE else OnStatus.PROGRESS)
+
+                    if (onCancel() || mIsComplete) {
+                        break
+                    }
+
                     lastUpdateBytes = mSofar
                     lastUpdateTime = now
                     buffer = produceWriteSeparation(produceWriteSeparationBuffer, outputStream, source)
@@ -231,10 +254,6 @@ class DownloadRunnable(
         return !mIsSupportMulti
     }
 
-    private fun alreadyDownloadSofar(): Long {
-        return startPosition() - mOriginStartPosition
-    }
-
     private fun handleAyncData(writeSeparation: WriteSeparation, sofar: Long, status: Int) {
         handleProgressValue(writeSeparation, sofar, mTotal, mThreadSerialNumber, status)
         GlobalSingleThreadWriteFileStream.ayncWrite(writeSeparation)
@@ -248,7 +267,7 @@ class DownloadRunnable(
         writeSeparation.threadId(threadId)
         writeSeparation.exeProgressCalc(mExeProgressCalc)
         writeSeparation.downloadListener(mDownloadListener)
-        writeSeparation.segment(mSeparationChunkSize)
+        writeSeparation.segment(mSegmentSize)
         writeSeparation.extSize(mExtSize)
         writeSeparation.url(mUrl)
         writeSeparation.path(mPath)

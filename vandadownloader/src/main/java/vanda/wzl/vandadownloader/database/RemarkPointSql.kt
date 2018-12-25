@@ -4,6 +4,7 @@ interface RemarkPointSql {
     fun remarkPointSqlEntry(id: Long): RemarkPointSqlEntry
     fun insert(remarkPointSqlEntry: RemarkPointSqlEntry)
     fun update(remarkPointSqlEntry: RemarkPointSqlEntry)
+    fun delete(downloadId: Long)
 
     fun remarkMultiThreadPointSqlEntry(downloadId: Long, threadId: Long): RemarkMultiThreadPointSqlEntry
 

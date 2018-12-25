@@ -31,15 +31,15 @@ object AutoAdjustThreadPool {
                 LinkedBlockingQueue())
         scheduledExecutorService = ScheduledThreadPoolExecutor(3, Executors.defaultThreadFactory())
         scheduledExecutorService?.scheduleWithFixedDelay({
-            System.out.println("当前线程池状态！$executor")
+//            System.out.println("当前线程池状态！$executor")
             //当队列大小超过限制，且jvm内存使用率小于80%时扩容，防止无限制扩容
             if (executor!!.queue.size >= MAX_QUEUE_SIZE && executor!!.poolSize < executor!!.maximumPoolSize && getMemoryUsage() < 0.8f) {
-                System.out.println("线程池扩容！$executor")
+//                System.out.println("线程池扩容！$executor")
                 executor!!.corePoolSize = executor!!.poolSize + PER_ADD_THREAD
             }
             //当队列大小小于限制的80%，线程池缩容
             if (executor!!.poolSize > 0 && executor!!.queue.size < MAX_QUEUE_SIZE * 0.8) {
-                System.out.println("线程池缩容！$executor");
+//                System.out.println("线程池缩容！$executor");
                 executor!!.corePoolSize = executor!!.poolSize - PER_ADD_THREAD
             }
         }, MONITOR_DELAY_TIME, MONITOR_DELAY_TIME, TimeUnit.SECONDS)

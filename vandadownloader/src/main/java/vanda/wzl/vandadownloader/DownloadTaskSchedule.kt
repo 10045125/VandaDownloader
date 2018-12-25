@@ -16,6 +16,7 @@ import vanda.wzl.vandadownloader.util.DownloadUtils
 import vanda.wzl.vandadownloader.util.SpeedUtils
 import java.io.File
 import java.io.InputStream
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 
 class DownloadTaskSchedule(threadNum: Int, context: Context) : AbstractDownloadTaskSchedule(context) {
@@ -29,7 +30,7 @@ class DownloadTaskSchedule(threadNum: Int, context: Context) : AbstractDownloadT
     }
 
     private var mThreadNum = threadNum
-    private val mList = ArrayList<ExeRunnable>()
+    private val mList = ConcurrentHashMap<Int, ExeRunnable>()
     private var mFileSize: Long = -1
     private var mIsSupportMulti: Boolean = false
     private var mCurSofar = 0L
@@ -50,6 +51,12 @@ class DownloadTaskSchedule(threadNum: Int, context: Context) : AbstractDownloadT
         })
     }
 
+    fun pause() {
+        for (r in mList) {
+            r.value.pause()
+        }
+    }
+
     private fun handlerTaskParam(url: String): InputStream {
         val mProviderNetFileType = ProviderNetFileTypeImpl(url)
         val inputStream = mProviderNetFileType.firstIntactInputStream()
@@ -61,10 +68,9 @@ class DownloadTaskSchedule(threadNum: Int, context: Context) : AbstractDownloadT
     private fun createFile() {
         mPath = Environment.getExternalStorageDirectory().absolutePath + "/weixin.apk"
         val file = File(mPath)
-        if (file.exists()) {
-            file.delete()
+        if (!file.exists()) {
+            file.createNewFile()
         }
-        file.createNewFile()
     }
 
     private fun initDatabaseInfo() {
@@ -94,88 +100,85 @@ class DownloadTaskSchedule(threadNum: Int, context: Context) : AbstractDownloadT
                     mPath,
                     mDownloadId)
 
-            mList.add(downloadRunnable)
+            mList[i] = downloadRunnable
         }
 
         for (downloadRunnable in mList) {
-            AutoAdjustThreadPool.execute(downloadRunnable)
+            AutoAdjustThreadPool.execute(downloadRunnable.value)
         }
     }
 
     private fun startAync(url: String, downloadListener: DownloadListener) {
-        synchronized(lock = mList) {
-            createFile()
-            mDownloadId = DownloadUtils.generateId(url, mPath).toLong()
 
-            initDatabaseInfo()
+        mList.clear()
 
-            val threadInfos = findThreadInfo(mDownloadId)
+        createFile()
+        mDownloadId = DownloadUtils.generateId(url, mPath).toLong()
 
-            if (threadInfos.size == 0) {
-                val inputStream = handlerTaskParam(url)
-                val threadNum = if (mIsSupportMulti) mThreadNum else 1
-                val exSize = mFileSize % threadNum
-                val segmentSize = (mFileSize - exSize) / threadNum
+        initDatabaseInfo()
 
-                Log.i("vanda", "mFileSize = $mFileSize exSize = $exSize  segmentSize = $segmentSize")
+        val threadInfos = findThreadInfo(mDownloadId)
 
-                exeTask(threadNum, url, 0, segmentSize, exSize, inputStream, downloadListener)
-            } else {
-                mThreadNum = threadInfos.size
-                for (threadinfo in threadInfos) {
-                    val downloadRunnable = DownloadRunnable(
-                            url,
-                            threadinfo.segment,
-                            threadinfo.extSize,
-                            threadinfo.sofar,
-                            null,
-                            threadinfo.threadId,
-                            threadinfo.total,
-                            threadInfos.size,
-                            true,
-                            this,
-                            downloadListener,
-                            mPath,
-                            threadinfo.downloadFileId)
+        if (threadInfos.size == 0) {
+            val inputStream = handlerTaskParam(url)
+            val threadNum = if (mIsSupportMulti) mThreadNum else 1
+            val exSize = mFileSize % threadNum
+            val segmentSize = (mFileSize - exSize) / threadNum
 
-                    mList.add(downloadRunnable)
-                }
+            Log.i("vanda", "mFileSize = $mFileSize exSize = $exSize  segmentSize = $segmentSize")
 
-                for (downloadRunnable in mList) {
-                    AutoAdjustThreadPool.execute(downloadRunnable)
-                }
+            exeTask(threadNum, url, 0, segmentSize, exSize, inputStream, downloadListener)
+        } else {
+            mThreadNum = threadInfos.size
+            for (threadinfo in threadInfos) {
+                val downloadRunnable = DownloadRunnable(
+                        url,
+                        threadinfo.segment,
+                        threadinfo.extSize,
+                        threadinfo.sofar,
+                        null,
+                        threadinfo.threadId,
+                        threadinfo.total,
+                        threadInfos.size,
+                        true,
+                        this,
+                        downloadListener,
+                        mPath,
+                        threadinfo.downloadFileId)
 
+                mList[threadinfo.threadId] = downloadRunnable
             }
+
+            for (downloadRunnable in mList) {
+                AutoAdjustThreadPool.execute(downloadRunnable.value)
+            }
+
         }
     }
 
     override fun exeProgressCalc(): Long {
-        synchronized(lock = mList) {
-            var sofarTotal: Long = 0
-            for (exeRunnable in mList) {
-                sofarTotal += exeRunnable.sofar()
-            }
-            var time = System.currentTimeMillis() - mTime
-            if (time >= SPEED_TIME_INTVAL) {
-                time -= PROCESS_TIME_INTVAL
-                mSpeedIncrement = (sofarTotal - mCurSofar) * ONE_SECEND_TIME / time
-                mTime = System.currentTimeMillis()
-                mCurSofar = sofarTotal
-            }
-            return sofarTotal
+        var sofarTotal: Long = 0
+        for (exeRunnable in mList) {
+            sofarTotal += exeRunnable.value.sofar()
         }
+        var time = System.currentTimeMillis() - mTime
+        if (time >= SPEED_TIME_INTVAL) {
+            time -= PROCESS_TIME_INTVAL
+            mSpeedIncrement = (sofarTotal - mCurSofar) * ONE_SECEND_TIME / time
+            mTime = System.currentTimeMillis()
+            mCurSofar = sofarTotal
+        }
+        return sofarTotal
     }
 
     override fun allComplete(): Boolean {
-        synchronized(lock = mList) {
-            var allComplete = true
-            for (exeRunnable in mList) {
-                if (!exeRunnable.complete()) {
-                    allComplete = false
-                }
+        var allComplete = true
+        for (exeRunnable in mList) {
+            if (!exeRunnable.value.complete()) {
+                allComplete = false
             }
-            return allComplete
         }
+        return allComplete
     }
 
     override fun speedIncrement(): String {
@@ -183,8 +186,25 @@ class DownloadTaskSchedule(threadNum: Int, context: Context) : AbstractDownloadT
     }
 
     override fun sofar(curThreadId: Int): Long {
-        synchronized(lock = mList) {
-            return mList[curThreadId].sofar()
+        return mList[curThreadId]!!.sofar()
+    }
+
+    override fun pauseComplete(curThreadId: Int) {
+        (mList[curThreadId])?.pauseComplete()
+    }
+
+    override fun allPauseComplete(): Boolean {
+        var allPauseComplete = true
+        for (exeRunnable in mList) {
+            if (!exeRunnable.value.isPauseComplete()) {
+                allPauseComplete = false
+            }
         }
+        return allPauseComplete
+    }
+
+    fun clean() {
+        delete(mDownloadId)
+        deleteThreadInfo(mDownloadId)
     }
 }

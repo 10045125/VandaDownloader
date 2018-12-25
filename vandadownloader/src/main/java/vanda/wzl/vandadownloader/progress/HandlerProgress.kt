@@ -53,8 +53,13 @@ class HandlerProgress(looper: Looper) : Handler(looper) {
             OnStatus.COMPLETE -> {
                 val allComplete = progressData.exeProgressCalc?.allComplete()
                 Log.d("vanda", "sofarChild = ${progressData.sofarChild} segment = ${progressData.totalChild} percent = $percent percentChild = $percentChild threadId = ${progressData.threadId} complete, allComplete = $allComplete")
+
+                progressData.exeProgressCalc?.update(progressData.fillingRemarkMultiThreadPointSqlEntry())
+                progressData.exeProgressCalc?.update(progressData.fillingRemarkPointSqlEntry())
+
                 MainHandler.syncProgressDataToMain(progressData)
                 if (allComplete!!) {
+                    progressData.allComplete = true
                     progressData.exeProgressCalc?.deleteThreadInfo(progressData.id)
                     MainHandler.syncCompleteProgressDataToMain(progressData)
 
@@ -62,11 +67,23 @@ class HandlerProgress(looper: Looper) : Handler(looper) {
                         AutoAdjustThreadPool.stop()
                     }, 10 * 1000)
                 }
-//                progressData.recycle()
             }
 
             OnStatus.PAUSE -> {
-                progressData.recycle()
+
+                Log.d("vanda", "sofarChild = ${progressData.sofarChild} segment = ${progressData.totalChild} percent = $percent percentChild = $percentChild threadId = ${progressData.threadId} pause")
+
+                progressData.exeProgressCalc?.update(progressData.fillingRemarkMultiThreadPointSqlEntry())
+                progressData.exeProgressCalc?.update(progressData.fillingRemarkPointSqlEntry())
+
+                progressData.exeProgressCalc?.pauseComplete(progressData.threadId)
+                val allPauseComplete = progressData.exeProgressCalc?.allPauseComplete()
+                Log.d("vanda", "sofarChild = ${progressData.sofarChild} segment = ${progressData.totalChild} percent = $percent percentChild = $percentChild threadId = ${progressData.threadId} pause, allPauseComplete = $allPauseComplete")
+                if (allPauseComplete!!) {
+                    MainHandler.syncProgressDataToMain(progressData)
+                } else {
+                    progressData.recycle()
+                }
             }
 
             OnStatus.ERROR -> {

@@ -79,6 +79,14 @@ class RemarkPointSqlImpl(context: Context) : RemarkPointSql {
         return list
     }
 
+    override fun delete(downloadId: Long) {
+        try {
+            db.delete(RemarkPointSqlKey.TABLE_NAME, "${RemarkPointSqlKey.ID} = ?", arrayOf(downloadId.toString()))
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     override fun deleteThreadInfo(downloadId: Long) {
         try {
             db.delete(TABLE_NAME_MULTI_THREAD, "$DOWNLOADFILE_ID = ?", arrayOf(downloadId.toString()))

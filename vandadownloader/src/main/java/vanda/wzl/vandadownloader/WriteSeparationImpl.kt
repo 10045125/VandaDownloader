@@ -1,5 +1,7 @@
 package vanda.wzl.vandadownloader
 
+import android.util.Log
+import vanda.wzl.vandadownloader.io.file.io.RandomAcessFileOutputStream
 import vanda.wzl.vandadownloader.io.file.separation.WriteSeparation
 import vanda.wzl.vandadownloader.progress.GlobalSingleThreadHandlerProgress
 import vanda.wzl.vandadownloader.progress.ProgressData
@@ -86,9 +88,10 @@ internal class WriteSeparationImpl(
     override fun onWriteSegmentBytesToStore() {
         try {
             mQuarkBufferedSink.emit()
+//            Log.i("vanda", "threadId = $threadId point = ${(mOutputStream as RandomAcessFileOutputStream).filePointer()}")
 
             val intval = System.currentTimeMillis() - mTimes[0]
-            if (status == OnStatus.COMPLETE || intval > progressIntval()) {
+            if (status != OnStatus.PROGRESS || intval > progressIntval()) {
 
                 val curSofar = exeProgressCalc?.let { exeProgressCalc!!.sofar(threadId) } ?: 0
                 val mSpeedIncrement = (curSofar - mTimes[1]) * ONE_SECEND_TIME / (intval + 1)
@@ -115,6 +118,7 @@ internal class WriteSeparationImpl(
                 progressData.path = path
                 progressData.segment = segment
                 progressData.extSize = extSize
+
                 GlobalSingleThreadHandlerProgress.ayncProgressData(progressData)
             }
 

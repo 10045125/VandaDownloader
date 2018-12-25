@@ -7,4 +7,6 @@ interface ExeProgressCalc : RemarkPointSql {
     fun allComplete(): Boolean
     fun speedIncrement(): String
     fun sofar(curThreadId: Int): Long
+    fun pauseComplete(curThreadId: Int)
+    fun allPauseComplete(): Boolean
 }
