@@ -193,8 +193,8 @@ class DownloadTaskSchedule(threadNum: Int, context: Context) : AbstractDownloadT
         return allComplete
     }
 
-    override fun speedIncrement(): String {
-        return SpeedUtils.formatSize(mSpeedIncrement)
+    override fun speedIncrement(): Long {
+        return mSpeedIncrement
     }
 
     override fun sofar(curThreadId: Int): Long {

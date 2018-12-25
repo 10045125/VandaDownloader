@@ -14,15 +14,7 @@
  * limitations under the License.
  */
 
-package vanda.wzl.vandadownloader.core
+package vanda.wzl.vandadownloader.multitask
 
-import vanda.wzl.vandadownloader.core.database.RemarkPointSql
-
-interface ExeProgressCalc : RemarkPointSql {
-    fun exeProgressCalc(): Long
-    fun allComplete(): Boolean
-    fun speedIncrement(): Long
-    fun sofar(curThreadId: Int): Long
-    fun pauseComplete(curThreadId: Int)
-    fun allPauseComplete(): Boolean
+class MultiDownloadTaskDispather {
 }

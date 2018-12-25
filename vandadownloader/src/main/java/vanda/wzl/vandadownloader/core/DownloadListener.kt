@@ -17,7 +17,7 @@
 package vanda.wzl.vandadownloader.core
 
 interface DownloadListener {
-    fun onProgress(sofar: Long, sofarChild: Long, total: Long, totalChild: Long, percent: String, percentChild: String, speed: String, speedChild: String, threadId: Int)
+    fun onProgress(sofar: Long, sofarChild: Long, total: Long, totalChild: Long, percent: String, percentChild: String, speed: Long, speedChild: Long, threadId: Int)
 
     fun onComplete()
 

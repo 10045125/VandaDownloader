@@ -60,7 +60,7 @@ class HandlerProgress(looper: Looper) : Handler(looper) {
             }
 
             vanda.wzl.vandadownloader.core.status.OnStatus.PROGRESS -> {
-                Log.d("vanda", "sofarChild = ${progressData.sofarChild} segment = ${progressData.totalChild} totalProgress = $sofar  percent = $percent percentChild = $percentChild speed = $speed  threadId = ${progressData.threadId}")
+                Log.d("vanda", "sofarChild = ${progressData.sofarChild} segment = ${progressData.totalChild} totalProgress = $sofar  percent = $percent percentChild = $percentChild speed = $speed speedChild = ${progressData.speedChild}  threadId = ${progressData.threadId}")
                 progressData.exeProgressCalc?.update(progressData.fillingRemarkMultiThreadPointSqlEntry())
                 progressData.exeProgressCalc?.update(progressData.fillingRemarkPointSqlEntry())
                 MainHandler.syncProgressDataToMain(progressData)

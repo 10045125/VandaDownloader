@@ -50,7 +50,7 @@ interface WriteSeparation {
             progressData.totalChild = segment
             progressData.id = id
             progressData.threadId = threadId
-            progressData.speedChild = SpeedUtils.formatSize(0)
+            progressData.speedChild = 0
             progressData.status = vanda.wzl.vandadownloader.core.status.OnStatus.COMPLETE
             progressData.exeProgressCalc = exeProgressCalc
             progressData.downloadListener = downloadListener

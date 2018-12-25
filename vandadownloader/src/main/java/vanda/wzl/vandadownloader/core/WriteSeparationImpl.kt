@@ -103,14 +103,14 @@ internal class WriteSeparationImpl(
         return PROGRESS_INTVAL
     }
 
-    private fun fillProgressData(speedIncrement: Long) {
+    private fun fillProgressData(speedChild: Long) {
         val progressData = ProgressData.obtain()
         progressData.sofarChild = sofar
         progressData.total = total
         progressData.totalChild = segment
         progressData.id = id
         progressData.threadId = threadId
-        progressData.speedChild = SpeedUtils.formatSize(speedIncrement)
+        progressData.speedChild = speedChild
         progressData.status = status
         progressData.exeProgressCalc = exeProgressCalc
         progressData.downloadListener = downloadListener

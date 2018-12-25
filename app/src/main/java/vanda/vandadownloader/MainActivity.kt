@@ -131,16 +131,16 @@ class MainActivity : AppCompatActivity() {
 
     private class MyDownloadListener(var activity: MainActivity) : DownloadListener {
         @SuppressLint("SetTextI18n")
-        override fun onProgress(sofar: Long, sofarChild: Long, total: Long, totalChild: Long, percent: String, percentChild: String, speed: String, speedChild: String, threadId: Int) {
+        override fun onProgress(sofar: Long, sofarChild: Long, total: Long, totalChild: Long, percent: String, percentChild: String, speed: Long, speedChild: Long, threadId: Int) {
             activity.breadcrumbsView!!.nextStep(threadId, java.lang.Float.valueOf(percentChild))
             activity.mTextViewProgress!!.text = String.format("%s/%s", SpeedUtils.formatSize(sofar), SpeedUtils.formatSize(total))
-            activity.mTextViewSpeed!!.text = String.format("%s/s", speed)
+            activity.mTextViewSpeed!!.text = if (percent.toFloat() < 1f) String.format("%s/s", calcSpeed(speed)) else "complete"
             activity.mTextViewTime!!.text = "${(sofar * 100 / total).toInt()}%"
 
             val itemData = activity.mAdapter!!.getItemData(threadId)
             itemData.title = "Segment$threadId (${SpeedUtils.formatSize(threadId * totalChild)} ~ ${SpeedUtils.formatSize((threadId + 1) * totalChild)})"
             itemData.progress = percentChild
-            itemData.speed = String.format("%s/s", speedChild)
+            itemData.speed = if (percentChild.toFloat() < 1f) String.format("%s/s", calcSpeed(speedChild)) else "complete"
 
             activity.mAdapter!!.notifyItemChanged(threadId)
         }
@@ -178,6 +178,19 @@ class MainActivity : AppCompatActivity() {
     private fun pp() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED)) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_PHONE_STATE, Manifest.permission.SYSTEM_ALERT_WINDOW), 199)
+        }
+    }
+
+    companion object {
+        private const val SIZE_1M = 1024 * 1024
+        private const val SIZE_MB = "MB"
+        private const val SIZE_KB = "KB"
+        internal fun calcSpeed(speed: Long): String {
+            return if (speed >= SIZE_1M) {
+                (speed / SIZE_1M).toString() + SIZE_MB
+            } else {
+                (speed / 1024).toString() + SIZE_KB
+            }
         }
     }
 

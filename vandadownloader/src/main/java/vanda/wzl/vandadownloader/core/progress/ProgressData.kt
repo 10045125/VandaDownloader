@@ -32,8 +32,8 @@ class ProgressData {
     var sofarChild: Long = 0
     var total: Long = 0
     var totalChild: Long = 0
-    var speed: String = "0KB"
-    var speedChild: String = "0KB"
+    var speed: Long = 0
+    var speedChild: Long = 0
     var percent = "0.00"
     var percentChild = "0.00"
     var threadId: Int = 0
@@ -72,8 +72,8 @@ class ProgressData {
         totalChild = 0
         percent = "0.00"
         percentChild = "0.00"
-        speed = "0KB"
-        speedChild = speed
+        speed = 0
+        speedChild = 0
         threadId = 0
         segment = 0
         extSize = 0
