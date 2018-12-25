@@ -12,19 +12,18 @@ import android.support.v7.widget.AppCompatSeekBar
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.util.Log
-import android.view.View
 import android.widget.Button
 import android.widget.SeekBar
 import android.widget.TextView
 import io.victoralbertos.breadcumbs_view.BreadcrumbsView
-import vanda.wzl.vandadownloader.DownloadListener
-import vanda.wzl.vandadownloader.DownloadTaskSchedule
-import vanda.wzl.vandadownloader.util.SpeedUtils
+import vanda.wzl.vandadownloader.core.DownloadListener
+import vanda.wzl.vandadownloader.core.DownloadTaskSchedule
+import vanda.wzl.vandadownloader.core.util.SpeedUtils
 
 class MainActivity : AppCompatActivity() {
 
-//    private var url = "http://dlied5.myapp.com/myapp/1104466820/sgame/2017_com.tencent.tmgp.sgame_h177_1.42.1.6_a6157f.apk"
-    private val url: String = "https://dldir1.qq.com/weixin/android/weixin673android1360.apk"
+    private var url = "http://dlied5.myapp.com/myapp/1104466820/sgame/2017_com.tencent.tmgp.sgame_h177_1.42.1.6_a6157f.apk"
+//    private val url: String = "https://dldir1.qq.com/weixin/android/weixin673android1360.apk"
 //    private val url = "https://aq.qq.com/cn2/manage/mbtoken/mbtoken_download?Android=1&source_id=2886"
 //    private val url = "https://aq.qq.com/cn2/manage/mbtoken/mbtoken_download?Android=1&source_id=2886"
 //    private val url = "http://cn.club.vmall.com/forum.php?mod=attachment&aid=MjkzMzgwOXxiODViYzM3MnwxNDg5NTEyMzcxfDcxMjE1OTh8NTc4MjA3Mw%3D%3D"
