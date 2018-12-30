@@ -16,22 +16,16 @@
 
 package vanda.wzl.vandadownloader.core.database
 
-import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import vanda.wzl.vandadownloader.core.database.RemarkMultiThreadPointSqlKey.DOWNLOADFILE_ID
 import vanda.wzl.vandadownloader.core.database.RemarkMultiThreadPointSqlKey.TABLE_NAME_MULTI_THREAD
 
-class RemarkPointSqlImpl(context: Context) : RemarkPointSql {
+class RemarkPointSqlImpl : RemarkPointSql {
 
-    private val db: SQLiteDatabase
+    private val db: SQLiteDatabase = DefaultSQLiteOpenHelper.getSQLiteDatabase()
 
-    init {
-        val openHelper = DefaultSQLiteOpenHelper(context)
-        db = openHelper.writableDatabase
-    }
-
-    override fun remarkPointSqlEntry(id: Long): RemarkPointSqlEntry {
+    override fun remarkPointSqlEntry(id: Int): RemarkPointSqlEntry {
         val cursor = db.rawQuery("select * from " + RemarkPointSqlKey.TABLE_NAME + " where " + RemarkPointSqlKey.ID + "=?", arrayOf(id.toString()))
         return RemarkPointSqlEntry(cursor)
     }
@@ -44,7 +38,7 @@ class RemarkPointSqlImpl(context: Context) : RemarkPointSql {
         db.insert(RemarkPointSqlKey.TABLE_NAME, null, remarkPointSqlEntry.toContentValues())
     }
 
-    override fun remarkMultiThreadPointSqlEntry(downloadId: Long, threadId: Long): RemarkMultiThreadPointSqlEntry {
+    override fun remarkMultiThreadPointSqlEntry(downloadId: Int, threadId: Long): RemarkMultiThreadPointSqlEntry {
         val cursor = db.rawQuery(
                 "select * from " + RemarkMultiThreadPointSqlKey.TABLE_NAME_MULTI_THREAD +
                         " where " + RemarkMultiThreadPointSqlKey.DOWNLOADFILE_ID + "=? and " +
@@ -61,7 +55,7 @@ class RemarkPointSqlImpl(context: Context) : RemarkPointSql {
         db.insert(RemarkMultiThreadPointSqlKey.TABLE_NAME_MULTI_THREAD, null, remarkMultiThreadPointSqlEntry.toContentValues())
     }
 
-    override fun findThreadInfo(downloadId: Long): ArrayList<RemarkMultiThreadPointSqlEntry> {
+    override fun findThreadInfo(downloadId: Int): ArrayList<RemarkMultiThreadPointSqlEntry> {
 
         var cursor: Cursor? = null
         val list = ArrayList<RemarkMultiThreadPointSqlEntry>()
@@ -73,13 +67,13 @@ class RemarkPointSqlImpl(context: Context) : RemarkPointSql {
             while (cursor != null && cursor.moveToNext()) {
                 val remarkMultiThreadPointSqlEntry = RemarkMultiThreadPointSqlEntry()
                 remarkMultiThreadPointSqlEntry.fillingValue(
-                        cursor.getLong(cursor.getColumnIndex(RemarkMultiThreadPointSqlKey.ID)),
+                        cursor.getInt(cursor.getColumnIndex(RemarkMultiThreadPointSqlKey.ID)),
                         cursor.getString(cursor.getColumnIndex(RemarkMultiThreadPointSqlKey.URL)),
                         cursor.getLong(cursor.getColumnIndex(RemarkMultiThreadPointSqlKey.DOWNLOAD_SOFAR)),
                         cursor.getLong(cursor.getColumnIndex(RemarkMultiThreadPointSqlKey.DOWNLOAD_LENGTH)),
                         cursor.getInt(cursor.getColumnIndex(RemarkMultiThreadPointSqlKey.STATUS)),
                         cursor.getInt(cursor.getColumnIndex(RemarkMultiThreadPointSqlKey.THREAD_ID)),
-                        cursor.getLong(cursor.getColumnIndex(RemarkMultiThreadPointSqlKey.DOWNLOADFILE_ID)),
+                        cursor.getInt(cursor.getColumnIndex(RemarkMultiThreadPointSqlKey.DOWNLOADFILE_ID)),
                         cursor.getLong(cursor.getColumnIndex(RemarkMultiThreadPointSqlKey.NORMAL_SIZE)),
                         cursor.getLong(cursor.getColumnIndex(RemarkMultiThreadPointSqlKey.EXT_SIZE))
                 )
@@ -95,7 +89,7 @@ class RemarkPointSqlImpl(context: Context) : RemarkPointSql {
         return list
     }
 
-    override fun delete(downloadId: Long) {
+    override fun delete(downloadId: Int) {
         try {
             db.delete(RemarkPointSqlKey.TABLE_NAME, "${RemarkPointSqlKey.ID} = ?", arrayOf(downloadId.toString()))
         } catch (e: Exception) {
@@ -103,7 +97,7 @@ class RemarkPointSqlImpl(context: Context) : RemarkPointSql {
         }
     }
 
-    override fun deleteThreadInfo(downloadId: Long) {
+    override fun deleteThreadInfo(downloadId: Int) {
         try {
             db.delete(TABLE_NAME_MULTI_THREAD, "$DOWNLOADFILE_ID = ?", arrayOf(downloadId.toString()))
         } catch (e: Exception) {

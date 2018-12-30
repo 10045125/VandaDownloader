@@ -16,7 +16,6 @@
 
 package vanda.wzl.vandadownloader.core
 
-import android.content.Context
 import android.os.Environment
 import android.util.Log
 import quarkokio.Segment
@@ -26,12 +25,12 @@ import vanda.wzl.vandadownloader.core.net.ProviderNetFileTypeImpl
 import vanda.wzl.vandadownloader.core.status.OnStatus
 import vanda.wzl.vandadownloader.core.threadpool.AutoAdjustThreadPool
 import vanda.wzl.vandadownloader.core.util.DownloadUtils
-import vanda.wzl.vandadownloader.core.util.SpeedUtils
 import java.io.File
 import java.io.InputStream
 import java.util.concurrent.ConcurrentHashMap
 
-class DownloadTaskSchedule(threadNum: Int, context: Context) : AbstractDownloadTaskSchedule(context) {
+class DownloadTaskSchedule(threadNum: Int, private val mDownloadTaskStatus: DownloadTaskStatus, url: String, val mListener: DownloadListener, path: String) : AbstractDownloadTaskSchedule(), DownloadTaskAttribute {
+
 
     companion object {
         const val SEEK_SIZE = 3
@@ -49,24 +48,46 @@ class DownloadTaskSchedule(threadNum: Int, context: Context) : AbstractDownloadT
     private var mSpeedIncrement = 0L
     private var mTime = System.currentTimeMillis()
     private var mPath: String = ""
-    private var mDownloadId: Long = -1L
+    private var mDownloadId: Int = -1
     private var mUrl: String = ""
 
     init {
         SegmentPool.MAX_SIZE = 1024 * 1024 * 3
         Segment.SIZE = 1024 * 256
+        mUrl = url
+        mPath = path
     }
 
-    fun start(url: String, downloadListener: DownloadListener) {
+
+    override fun getTaskId(): Int {
+        return mDownloadId
+    }
+
+    override fun pendding() {
+    }
+
+    override fun start() {
         AutoAdjustThreadPool.execute(Runnable {
-            startAync(url, downloadListener)
+            startAync(mUrl, mListener)
         })
     }
 
-    fun pause() {
+    override fun pause() {
         for (r in mList) {
             r.value.pause()
         }
+    }
+
+    override fun getSofar(): Long {
+        return 0
+    }
+
+    override fun getTotal(): Long {
+        return 0
+    }
+
+    override fun getStatus(): Int {
+        return OnStatus.INVALID
     }
 
     private fun handlerTaskParam(url: String): InputStream {
@@ -78,7 +99,7 @@ class DownloadTaskSchedule(threadNum: Int, context: Context) : AbstractDownloadT
     }
 
     private fun createFile() {
-        mPath = Environment.getExternalStorageDirectory().absolutePath + "/weixin.apk"
+//        mPath = Environment.getExternalStorageDirectory().absolutePath + "/weixin.apk"
         val file = File(mPath)
         if (!file.exists()) {
             file.createNewFile()
@@ -125,7 +146,7 @@ class DownloadTaskSchedule(threadNum: Int, context: Context) : AbstractDownloadT
         mList.clear()
 
         createFile()
-        mDownloadId = DownloadUtils.generateId(url, mPath).toLong()
+        mDownloadId = DownloadUtils.generateId(url, mPath)
         initDatabaseInfo()
         val threadInfos = findThreadInfo(mDownloadId)
 
@@ -190,6 +211,11 @@ class DownloadTaskSchedule(threadNum: Int, context: Context) : AbstractDownloadT
                 allComplete = false
             }
         }
+
+        if (allComplete) {
+            mDownloadTaskStatus.complete(mDownloadId)
+        }
+
         return allComplete
     }
 
@@ -212,6 +238,9 @@ class DownloadTaskSchedule(threadNum: Int, context: Context) : AbstractDownloadT
                 allPauseComplete = false
             }
         }
+        if (allPauseComplete) {
+            mDownloadTaskStatus.pauseComplete(mDownloadId)
+        }
         return allPauseComplete
     }
 
@@ -221,7 +250,7 @@ class DownloadTaskSchedule(threadNum: Int, context: Context) : AbstractDownloadT
     }
 
     fun deletefile() {
-        mPath = Environment.getExternalStorageDirectory().absolutePath + "/weixin.apk"
+//        mPath = Environment.getExternalStorageDirectory().absolutePath + "/weixin.apk"
         val file = File(mPath)
         if (file.exists()) {
             file.delete()

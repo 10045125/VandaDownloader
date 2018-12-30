@@ -17,18 +17,18 @@
 package vanda.wzl.vandadownloader.core.database
 
 interface RemarkPointSql {
-    fun remarkPointSqlEntry(id: Long): RemarkPointSqlEntry
+    fun remarkPointSqlEntry(id: Int): RemarkPointSqlEntry
     fun insert(remarkPointSqlEntry: RemarkPointSqlEntry)
     fun update(remarkPointSqlEntry: RemarkPointSqlEntry)
-    fun delete(downloadId: Long)
+    fun delete(downloadId: Int)
 
-    fun remarkMultiThreadPointSqlEntry(downloadId: Long, threadId: Long): RemarkMultiThreadPointSqlEntry
+    fun remarkMultiThreadPointSqlEntry(downloadId: Int, threadId: Long): RemarkMultiThreadPointSqlEntry
 
     fun update(remarkMultiThreadPointSqlEntry: RemarkMultiThreadPointSqlEntry)
 
     fun insert(remarkMultiThreadPointSqlEntry: RemarkMultiThreadPointSqlEntry)
 
-    fun findThreadInfo(downloadId: Long): ArrayList<RemarkMultiThreadPointSqlEntry>
+    fun findThreadInfo(downloadId: Int): ArrayList<RemarkMultiThreadPointSqlEntry>
 
-    fun deleteThreadInfo(downloadId: Long)
+    fun deleteThreadInfo(downloadId: Int)
 }

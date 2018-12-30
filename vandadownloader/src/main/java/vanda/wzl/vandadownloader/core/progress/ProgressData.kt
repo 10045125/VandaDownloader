@@ -25,7 +25,7 @@ import vanda.wzl.vandadownloader.core.status.OnStatus
 class ProgressData {
     private var mNext: ProgressData? = null
 
-    var id: Long = 0
+    var id: Int = 0
     var url: String = ""
     var path: String = ""
     var sofar: Long = 0

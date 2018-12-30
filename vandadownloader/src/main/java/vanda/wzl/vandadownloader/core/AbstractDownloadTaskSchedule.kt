@@ -16,20 +16,19 @@
 
 package vanda.wzl.vandadownloader.core
 
-import android.content.Context
 import vanda.wzl.vandadownloader.core.database.RemarkMultiThreadPointSqlEntry
 import vanda.wzl.vandadownloader.core.database.RemarkPointSql
 import vanda.wzl.vandadownloader.core.database.RemarkPointSqlEntry
 import vanda.wzl.vandadownloader.core.database.RemarkPointSqlImpl
 
-abstract class AbstractDownloadTaskSchedule(context: Context) : ExeProgressCalc {
+abstract class AbstractDownloadTaskSchedule() : ExeProgressCalc {
     private val mRemarkPointSql: RemarkPointSql
 
     init {
-        mRemarkPointSql = RemarkPointSqlImpl(context)
+        mRemarkPointSql = RemarkPointSqlImpl()
     }
 
-    override fun remarkPointSqlEntry(id: Long): RemarkPointSqlEntry {
+    override fun remarkPointSqlEntry(id: Int): RemarkPointSqlEntry {
         return mRemarkPointSql.remarkPointSqlEntry(id)
     }
 
@@ -41,7 +40,7 @@ abstract class AbstractDownloadTaskSchedule(context: Context) : ExeProgressCalc 
         mRemarkPointSql.update(remarkPointSqlEntry)
     }
 
-    override fun remarkMultiThreadPointSqlEntry(downloadId: Long, threadId: Long): RemarkMultiThreadPointSqlEntry {
+    override fun remarkMultiThreadPointSqlEntry(downloadId: Int, threadId: Long): RemarkMultiThreadPointSqlEntry {
         return mRemarkPointSql.remarkMultiThreadPointSqlEntry(downloadId, threadId)
     }
 
@@ -53,15 +52,15 @@ abstract class AbstractDownloadTaskSchedule(context: Context) : ExeProgressCalc 
         mRemarkPointSql.insert(remarkMultiThreadPointSqlEntry)
     }
 
-    override fun findThreadInfo(downloadId: Long): ArrayList<RemarkMultiThreadPointSqlEntry> {
+    override fun findThreadInfo(downloadId: Int): ArrayList<RemarkMultiThreadPointSqlEntry> {
         return mRemarkPointSql.findThreadInfo(downloadId)
     }
 
-    override fun deleteThreadInfo(downloadId: Long) {
+    override fun deleteThreadInfo(downloadId: Int) {
         mRemarkPointSql.deleteThreadInfo(downloadId)
     }
 
-    override fun delete(downloadId: Long) {
+    override fun delete(downloadId: Int) {
         mRemarkPointSql.delete(downloadId)
     }
 }

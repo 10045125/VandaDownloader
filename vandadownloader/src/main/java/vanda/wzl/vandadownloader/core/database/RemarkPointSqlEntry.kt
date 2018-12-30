@@ -23,7 +23,7 @@ import java.lang.Exception
 
 class RemarkPointSqlEntry(var cursor: Cursor?) {
 
-    var id: Long? = 0
+    var id: Int? = 0
     var url: String = ""
     var path: String = ""
     var sofar: Long = 0
@@ -42,7 +42,7 @@ class RemarkPointSqlEntry(var cursor: Cursor?) {
         if (cursor != null && cursor!!.count == 1) {
             try {
                 while (cursor!!.moveToNext()) {
-                    this.id = cursor!!.getLong(cursor!!.getColumnIndex(RemarkPointSqlKey.ID))
+                    this.id = cursor!!.getInt(cursor!!.getColumnIndex(RemarkPointSqlKey.ID))
                     this.sofar = cursor!!.getLong(cursor!!.getColumnIndex(RemarkPointSqlKey.SOFAR))
                     this.total = cursor!!.getLong(cursor!!.getColumnIndex(RemarkPointSqlKey.TOTAL))
                     this.url = cursor!!.getString(cursor!!.getColumnIndex(RemarkPointSqlKey.URL))
@@ -57,7 +57,7 @@ class RemarkPointSqlEntry(var cursor: Cursor?) {
         }
     }
 
-    fun fillingValue(id: Long, url: String, path: String, sofar: Long, total: Long, status: Int, supportMultiThread: Boolean): RemarkPointSqlEntry {
+    fun fillingValue(id: Int, url: String, path: String, sofar: Long, total: Long, status: Int, supportMultiThread: Boolean): RemarkPointSqlEntry {
         this.id = id
         this.url = url
         this.path = path

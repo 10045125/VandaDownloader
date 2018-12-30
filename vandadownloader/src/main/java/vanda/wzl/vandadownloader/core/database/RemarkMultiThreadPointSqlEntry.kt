@@ -25,12 +25,12 @@ import java.lang.Exception
 class RemarkMultiThreadPointSqlEntry(var cursor: Cursor?) {
 
     var invalid = false
-    var id: Long = 0
+    var id: Int = 0
     var url: String = ""
     var total: Long = 0
     var sofar: Long = 0
     var threadId: Int = 0
-    var downloadFileId: Long = 0
+    var downloadFileId: Int = 0
     var status: Int = vanda.wzl.vandadownloader.core.status.OnStatus.INVALID
     var segment: Long = 0
     var extSize: Long = 0
@@ -45,10 +45,10 @@ class RemarkMultiThreadPointSqlEntry(var cursor: Cursor?) {
         if (cursor != null && cursor!!.count == 1) {
             try {
                 while (cursor!!.moveToNext()) {
-                    this.id = cursor!!.getLong(cursor!!.getColumnIndex(RemarkMultiThreadPointSqlKey.ID))
+                    this.id = cursor!!.getInt(cursor!!.getColumnIndex(RemarkMultiThreadPointSqlKey.ID))
                     this.status = cursor!!.getInt(cursor!!.getColumnIndex(RemarkMultiThreadPointSqlKey.STATUS))
                     this.threadId = cursor!!.getInt(cursor!!.getColumnIndex(RemarkMultiThreadPointSqlKey.THREAD_ID))
-                    this.downloadFileId = cursor!!.getLong(cursor!!.getColumnIndex(RemarkMultiThreadPointSqlKey.DOWNLOADFILE_ID))
+                    this.downloadFileId = cursor!!.getInt(cursor!!.getColumnIndex(RemarkMultiThreadPointSqlKey.DOWNLOADFILE_ID))
                     this.sofar = cursor!!.getLong(cursor!!.getColumnIndex(RemarkMultiThreadPointSqlKey.DOWNLOAD_SOFAR))
                     this.total = cursor!!.getLong(cursor!!.getColumnIndex(RemarkMultiThreadPointSqlKey.DOWNLOAD_LENGTH))
                     this.segment = cursor!!.getLong(cursor!!.getColumnIndex(RemarkMultiThreadPointSqlKey.NORMAL_SIZE))
@@ -63,7 +63,7 @@ class RemarkMultiThreadPointSqlEntry(var cursor: Cursor?) {
         }
     }
 
-    fun fillingValue(id: Long, url: String, sofar: Long, total: Long, status: Int, threadId: Int, downloadId: Long, segment: Long, extSize: Long) {
+    fun fillingValue(id: Int, url: String, sofar: Long, total: Long, status: Int, threadId: Int, downloadId: Int, segment: Long, extSize: Long) {
         this.id = id
         this.url = url
         this.sofar = sofar

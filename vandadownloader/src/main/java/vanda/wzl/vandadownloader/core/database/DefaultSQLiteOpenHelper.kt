@@ -16,11 +16,17 @@
 
 package vanda.wzl.vandadownloader.core.database
 
-import android.content.Context
+import android.annotation.SuppressLint
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import vanda.wzl.vandadownloader.core.DownloadContext
 
-class DefaultSQLiteOpenHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
+class DefaultSQLiteOpenHelper : SQLiteOpenHelper(DownloadContext.getContext(), DATABASE_NAME, null, DATABASE_VERSION) {
+
+    private object SingleHolder {
+        @SuppressLint("StaticFieldLeak")
+        internal val INSTANCE = DefaultSQLiteOpenHelper()
+    }
 
     /**
      * Called when the database is created for the first time. This is where the
@@ -91,5 +97,9 @@ class DefaultSQLiteOpenHelper(context: Context) : SQLiteOpenHelper(context, DATA
                 RemarkPointSqlKey.IS_NEED_REFER + "  TINYINT(1) DEFAULT 1, " +// file continue download
                 RemarkPointSqlKey.UPDATE_URL + " VARCHAR " +// update url
                 ")"
+
+        fun getSQLiteDatabase(): SQLiteDatabase {
+            return SingleHolder.INSTANCE.writableDatabase
+        }
     }
 }

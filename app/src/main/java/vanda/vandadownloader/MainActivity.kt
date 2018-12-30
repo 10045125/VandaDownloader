@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
@@ -18,7 +19,9 @@ import android.widget.TextView
 import io.victoralbertos.breadcumbs_view.BreadcrumbsView
 import vanda.wzl.vandadownloader.core.DownloadListener
 import vanda.wzl.vandadownloader.core.DownloadTaskSchedule
+import vanda.wzl.vandadownloader.core.util.DownloadUtils
 import vanda.wzl.vandadownloader.core.util.SpeedUtils
+import vanda.wzl.vandadownloader.multitask.MultiDownloadTaskDispather
 
 class MainActivity : AppCompatActivity() {
 
@@ -118,14 +121,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun pause() {
-        downloadTaskSchedule?.pause()
+        downloadTaskSchedule?.pause(DownloadUtils.generateId(url, path))
     }
 
-    var downloadTaskSchedule: DownloadTaskSchedule? = null
+    var downloadTaskSchedule: MultiDownloadTaskDispather? = null
+    val path = Environment.getExternalStorageDirectory().absolutePath + "/weixin.apk"
 
     private fun testDownload() {
-        downloadTaskSchedule = DownloadTaskSchedule(mThreadNum, this)
-        downloadTaskSchedule?.start(url, MyDownloadListener(this))
+        downloadTaskSchedule = MultiDownloadTaskDispather()
+        downloadTaskSchedule?.start(url, MyDownloadListener(this), mThreadNum, path, true, 0,
+                0, 1, false, HashMap<String, String>(), false, false, "", 0, "")
     }
 
 

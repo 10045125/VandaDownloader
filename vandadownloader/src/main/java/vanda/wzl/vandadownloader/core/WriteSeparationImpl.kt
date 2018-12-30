@@ -19,7 +19,6 @@ package vanda.wzl.vandadownloader.core
 import vanda.wzl.vandadownloader.core.file.separation.WriteSeparation
 import vanda.wzl.vandadownloader.core.progress.GlobalSingleThreadHandlerProgress
 import vanda.wzl.vandadownloader.core.progress.ProgressData
-import vanda.wzl.vandadownloader.core.util.SpeedUtils
 import java.io.IOException
 import java.io.OutputStream
 import java.util.*
@@ -35,7 +34,7 @@ internal class WriteSeparationImpl(
 
     private var sofar: Long = -1
     private var total: Long = -1
-    private var id: Long = -1
+    private var id: Int = -1
     private var time: Long = 0
     private var threadId: Int = 0
     private var segment: Long = 0
@@ -63,7 +62,7 @@ internal class WriteSeparationImpl(
         this.status = status
     }
 
-    override fun id(id: Long) {
+    override fun id(id: Int) {
         this.id = id
     }
 

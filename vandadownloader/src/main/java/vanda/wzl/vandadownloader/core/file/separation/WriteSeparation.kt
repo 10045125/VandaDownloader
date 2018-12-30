@@ -31,7 +31,7 @@ interface WriteSeparation {
     fun sofar(sofar: Long)
     fun total(total: Long)
     fun status(@vanda.wzl.vandadownloader.core.status.OnStatus status: Int)
-    fun id(id: Long)
+    fun id(id: Int)
     fun threadId(id: Int)
     fun exeProgressCalc(exeProgressCalc: ExeProgressCalc)
     fun time(time: Long)
@@ -43,7 +43,7 @@ interface WriteSeparation {
     fun supportMultiThread(supportMultiThread: Boolean)
 
     companion object {
-        fun alreadyComplete(sofar: Long, total: Long, segment: Long, id: Long, threadId: Int, url: String, path: String, extSize: Long, supportMultiThread: Boolean, exeProgressCalc: ExeProgressCalc, downloadListener: DownloadListener) {
+        fun alreadyComplete(sofar: Long, total: Long, segment: Long, id: Int, threadId: Int, url: String, path: String, extSize: Long, supportMultiThread: Boolean, exeProgressCalc: ExeProgressCalc, downloadListener: DownloadListener) {
             val progressData = ProgressData.obtain()
             progressData.sofarChild = sofar
             progressData.total = total

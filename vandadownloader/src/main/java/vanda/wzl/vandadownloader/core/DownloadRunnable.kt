@@ -44,7 +44,7 @@ class DownloadRunnable(
         private val mExeProgressCalc: ExeProgressCalc,
         private val mDownloadListener: DownloadListener,
         private val mPath: String,
-        private val mDownloadId: Long
+        private val mDownloadId: Int
 ) : ExeRunnable {
 
     companion object {

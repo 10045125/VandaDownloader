@@ -16,5 +16,63 @@
 
 package vanda.wzl.vandadownloader.multitask
 
-class MultiDownloadTaskDispather {
+import vanda.wzl.vandadownloader.core.DownloadListener
+import vanda.wzl.vandadownloader.core.DownloadTaskSchedule
+import vanda.wzl.vandadownloader.core.util.DownloadUtils
+
+class MultiDownloadTaskDispather : TaskDispatherAttribute {
+
+    private var mDownloadTaskPool: DownloadTaskPool = DownloadTaskPool(3)
+
+    private var mDownloadTaskSchedule: DownloadTaskSchedule? = null
+
+
+    override fun start(url: String, listener: DownloadListener, threadNum: Int , path: String, pathAsDirectory: Boolean, callbackProgressTimes: Int, callbackProgressMinIntervalMillis: Int, autoRetryTimes: Int, forceReDownload: Boolean, header: Map<String, String>, isWifiRequired: Boolean, isGroup: Boolean, postBody: String, fileSize: Long, updateUrl: String) {
+        if (!isDownloading(url, path)) {
+            mDownloadTaskSchedule = DownloadTaskSchedule(threadNum, mDownloadTaskPool, url, listener, path)
+            mDownloadTaskPool.execTask(mDownloadTaskSchedule!!)
+        }
+    }
+
+    override fun pause(downloadId: Int) {
+        mDownloadTaskPool.pause(downloadId)
+    }
+
+    override fun isDownloading(downloadId: Int): Boolean {
+        return mDownloadTaskPool.isInTaskPool(downloadId)
+    }
+
+    override fun isDownloading(url: String, path: String): Boolean {
+        return isDownloading(DownloadUtils.generateId(url, path))
+    }
+
+    override fun getStatus(downloadId: Int): Int {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun getSofar(downloadId: Int): Long {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun getTotal(downloadId: Int): Long {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun isIdle(): Boolean {
+        return mDownloadTaskPool.isIdle()
+    }
+
+    override fun isBreakPointContinued(downloadId: Int): Boolean {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+
+    fun clean() {
+        mDownloadTaskSchedule!!.clean()
+    }
+
+    fun deletefile() {
+        mDownloadTaskSchedule!!.deletefile()
+    }
+
 }
