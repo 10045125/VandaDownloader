@@ -31,17 +31,17 @@ class HandlerSegment(looper: Looper) : Handler(looper) {
     }
 
     private fun proSegmentBytesToStoreSync(msg: Message) {
+////        val array = msg.obj as Array<*>
+////        val messageData = array[0] as MessageData
+//        val writeSeparation = array[1] as WriteSeparation
         val writeSeparation = msg.obj as WriteSeparation
         try {
             writeSeparation.onWriteSegmentBytesToStore()
             writeSeparation.syncCurData()
         } catch (e: Exception) {
             e.printStackTrace()
-            if (writeSeparation == null) {
-                throw RuntimeException("WriteSeparation is null !!!")
-            }
         }
-
+//        messageData.recycle()
     }
 
     companion object {

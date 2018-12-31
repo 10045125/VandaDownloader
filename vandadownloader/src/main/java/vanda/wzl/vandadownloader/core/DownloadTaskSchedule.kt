@@ -16,7 +16,6 @@
 
 package vanda.wzl.vandadownloader.core
 
-import android.os.Environment
 import android.util.Log
 import quarkokio.Segment
 import quarkokio.SegmentPool
@@ -56,6 +55,7 @@ class DownloadTaskSchedule(threadNum: Int, private val mDownloadTaskStatus: Down
         Segment.SIZE = 1024 * 256
         mUrl = url
         mPath = path
+        mDownloadId = DownloadUtils.generateId(url, mPath)
     }
 
 
@@ -73,6 +73,7 @@ class DownloadTaskSchedule(threadNum: Int, private val mDownloadTaskStatus: Down
     }
 
     override fun pause() {
+        Log.i("vanda", "pause id = $mDownloadId")
         for (r in mList) {
             r.value.pause()
         }
@@ -144,12 +145,10 @@ class DownloadTaskSchedule(threadNum: Int, private val mDownloadTaskStatus: Down
     private fun startAync(url: String, downloadListener: DownloadListener) {
 
         mList.clear()
-
         createFile()
-        mDownloadId = DownloadUtils.generateId(url, mPath)
         initDatabaseInfo()
         val threadInfos = findThreadInfo(mDownloadId)
-
+        Log.i("vanda", "url = $url path = $mPath threadInfos = ${threadInfos.size}")
         if (threadInfos.size == 0) {
             val inputStream = handlerTaskParam(url)
             update(RemarkPointSqlEntry().fillingValue(mDownloadId, url, mPath, 0, mFileSize, vanda.wzl.vandadownloader.core.status.OnStatus.INVALID, mIsSupportMulti))

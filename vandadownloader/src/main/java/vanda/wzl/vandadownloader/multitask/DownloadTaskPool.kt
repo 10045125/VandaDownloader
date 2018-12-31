@@ -16,6 +16,7 @@
 
 package vanda.wzl.vandadownloader.multitask
 
+import android.util.Log
 import android.util.SparseArray
 import vanda.wzl.vandadownloader.core.DownloadTaskAttribute
 import vanda.wzl.vandadownloader.core.DownloadTaskStatus
@@ -32,13 +33,12 @@ class DownloadTaskPool(maxTaskNum: Int) : DownloadTaskStatus {
         mMaxTaskNum = maxTaskNum
     }
 
-    private val downloadingTaskSparseArray: SparseArray<DownloadTaskAttribute>
-        get() = SparseArray()
-    private val downloadTaskWaitingSparseArray: SparseArray<DownloadTaskAttribute>
-        get() = SparseArray()
+    private val downloadingTaskSparseArray: SparseArray<DownloadTaskAttribute> = SparseArray()
+    private val downloadTaskWaitingSparseArray: SparseArray<DownloadTaskAttribute> = SparseArray()
 
 
     override fun complete(downloadId: Int) {
+        Log.i("vanda", "complete id = $downloadId")
         synchronized(downloadingTaskSparseArray) {
             downloadingTaskSparseArray.remove(downloadId)
             if (downloadTaskWaitingSparseArray.size() > 0 && downloadingTaskSparseArray.size() < mMaxTaskNum) {
@@ -55,6 +55,7 @@ class DownloadTaskPool(maxTaskNum: Int) : DownloadTaskStatus {
     }
 
     fun execTask(fileDownloadTask: DownloadTaskAttribute) {
+        Log.i("vanda", "execTask id = ${fileDownloadTask.getTaskId()}")
         synchronized(downloadingTaskSparseArray) {
             if (downloadingTaskSparseArray.size() == mMaxTaskNum) {
                 downloadTaskWaitingSparseArray.put(fileDownloadTask.getTaskId(), fileDownloadTask)
@@ -81,18 +82,18 @@ class DownloadTaskPool(maxTaskNum: Int) : DownloadTaskStatus {
     }
 
     fun pause(id: Int): Boolean {
+        Log.i("vanda", "pool pause id = $id")
         synchronized(downloadingTaskSparseArray) {
-            val fileDownloadTask = downloadingTaskSparseArray.get(id)
-            if (fileDownloadTask != null) {
-                fileDownloadTask!!.pause()
-            }
+            downloadingTaskSparseArray.get(id)?.pause()
 
             val downloadTask = downloadTaskWaitingSparseArray.get(id)
             if (downloadTask != null) {
                 downloadTaskWaitingSparseArray.remove(id)
-                downloadTask!!.pause()
+                downloadTask.pause()
             }
+
             complete(id)
+
             return true
         }
     }

@@ -16,29 +16,12 @@
 
 package vanda.wzl.vandadownloader.core.progress
 
-import android.os.HandlerThread
-import android.os.Message
+import vanda.wzl.vandadownloader.core.threadpool.AutoAdjustThreadPool
 
-class GlobalSingleThreadHandlerProgress private constructor() {
-
-    private val mHandlerThread: HandlerThread = HandlerThread("GlobalSingleThreadHandlerProgress")
-    private val mHandlerSegment: HandlerProgress
-
-    private object SingleHolder {
-        internal val INSTANCE = GlobalSingleThreadHandlerProgress()
-    }
-
-    init {
-        mHandlerThread.start()
-        mHandlerSegment = HandlerProgress(mHandlerThread.looper)
-    }
-
+class HandlerProgressToThreadPool {
     companion object {
         fun ayncProgressData(progressData: ProgressData) {
-            val msg = Message.obtain()
-            msg.what = HandlerProgress.MSG_WRITE
-            msg.obj = progressData
-            SingleHolder.INSTANCE.mHandlerSegment.sendMessage(msg)
+            AutoAdjustThreadPool.execute(RunnableImpl.obtain(progressData))
         }
     }
 }

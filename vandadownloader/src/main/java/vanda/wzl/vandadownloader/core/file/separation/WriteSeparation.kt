@@ -18,10 +18,8 @@ package vanda.wzl.vandadownloader.core.file.separation
 
 import vanda.wzl.vandadownloader.core.DownloadListener
 import vanda.wzl.vandadownloader.core.ExeProgressCalc
-import vanda.wzl.vandadownloader.core.progress.GlobalSingleThreadHandlerProgress
+import vanda.wzl.vandadownloader.core.progress.HandlerProgressToThreadPool
 import vanda.wzl.vandadownloader.core.progress.ProgressData
-import vanda.wzl.vandadownloader.core.status.OnStatus
-import vanda.wzl.vandadownloader.core.util.SpeedUtils
 
 
 interface WriteSeparation {
@@ -59,7 +57,7 @@ interface WriteSeparation {
             progressData.segment = segment
             progressData.extSize = extSize
             progressData.supportMultiThread = supportMultiThread
-            GlobalSingleThreadHandlerProgress.ayncProgressData(progressData)
+            HandlerProgressToThreadPool.ayncProgressData(progressData)
         }
     }
 }

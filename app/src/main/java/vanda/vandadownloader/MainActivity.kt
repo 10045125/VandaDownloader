@@ -18,15 +18,15 @@ import android.widget.SeekBar
 import android.widget.TextView
 import io.victoralbertos.breadcumbs_view.BreadcrumbsView
 import vanda.wzl.vandadownloader.core.DownloadListener
-import vanda.wzl.vandadownloader.core.DownloadTaskSchedule
 import vanda.wzl.vandadownloader.core.util.DownloadUtils
 import vanda.wzl.vandadownloader.core.util.SpeedUtils
 import vanda.wzl.vandadownloader.multitask.MultiDownloadTaskDispather
 
 class MainActivity : AppCompatActivity() {
 
-    private var url = "http://dlied5.myapp.com/myapp/1104466820/sgame/2017_com.tencent.tmgp.sgame_h177_1.42.1.6_a6157f.apk"
-//    private val url: String = "https://dldir1.qq.com/weixin/android/weixin673android1360.apk"
+    private var url_wangzhe = "http://dlied5.myapp.com/myapp/1104466820/sgame/2017_com.tencent.tmgp.sgame_h177_1.42.1.6_a6157f.apk"
+    private val url_weixin = "https://dldir1.qq.com/weixin/android/weixin673android1360.apk"
+    private val url_uc = "https://wap3.ucweb.com/files/UCBrowser/zh-cn/999/UCBrowser_V12.2.4.1004_android_pf145_(Build181221104439).apk?auth_key=1546841763-0-0-027797a9e742e60492129100eb7049aa&SESSID=5d7eb191-4076-4d42-8867-f8349374294c"
 //    private val url = "https://aq.qq.com/cn2/manage/mbtoken/mbtoken_download?Android=1&source_id=2886"
 //    private val url = "https://aq.qq.com/cn2/manage/mbtoken/mbtoken_download?Android=1&source_id=2886"
 //    private val url = "http://cn.club.vmall.com/forum.php?mod=attachment&aid=MjkzMzgwOXxiODViYzM3MnwxNDg5NTEyMzcxfDcxMjE1OTh8NTc4MjA3Mw%3D%3D"
@@ -121,15 +121,25 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun pause() {
-        downloadTaskSchedule?.pause(DownloadUtils.generateId(url, path))
+        downloadTaskSchedule?.pause(DownloadUtils.generateId(url_wangzhe, path_wangzhe))
+        downloadTaskSchedule?.pause(DownloadUtils.generateId(url_weixin, path_weixin))
+        downloadTaskSchedule?.pause(DownloadUtils.generateId(url_uc, path_uc))
     }
 
     var downloadTaskSchedule: MultiDownloadTaskDispather? = null
-    val path = Environment.getExternalStorageDirectory().absolutePath + "/weixin.apk"
+    val path_weixin = Environment.getExternalStorageDirectory().absolutePath + "/weixin_.apk"
+    val path_wangzhe = Environment.getExternalStorageDirectory().absolutePath + "/wangzherongyao.apk"
+    val path_uc = Environment.getExternalStorageDirectory().absolutePath + "/uc.apk"
 
     private fun testDownload() {
         downloadTaskSchedule = MultiDownloadTaskDispather()
-        downloadTaskSchedule?.start(url, MyDownloadListener(this), mThreadNum, path, true, 0,
+        downloadTaskSchedule?.start(url_wangzhe, MyDownloadListener(this), mThreadNum, path_wangzhe, true, 0,
+                0, 1, false, HashMap<String, String>(), false, false, "", 0, "")
+
+        downloadTaskSchedule?.start(url_weixin, VandaDownloadListener(this), mThreadNum, path_weixin, true, 0,
+                0, 1, false, HashMap<String, String>(), false, false, "", 0, "")
+
+        downloadTaskSchedule?.start(url_uc, VandaDownloadListener(this), mThreadNum, path_uc, true, 0,
                 0, 1, false, HashMap<String, String>(), false, false, "", 0, "")
     }
 
@@ -148,6 +158,22 @@ class MainActivity : AppCompatActivity() {
             itemData.speed = if (percentChild.toFloat() < 1f) String.format("%s/s", calcSpeed(speedChild)) else "complete"
 
             activity.mAdapter!!.notifyItemChanged(threadId)
+        }
+
+        override fun onComplete() {
+//            activity.mIsStart = false
+        }
+
+        override fun onPause() {
+            Log.i("vanda", "onPause complete")
+//            activity.mIsStart = false
+        }
+    }
+
+
+    private class VandaDownloadListener(var activity: MainActivity) : DownloadListener {
+        @SuppressLint("SetTextI18n")
+        override fun onProgress(sofar: Long, sofarChild: Long, total: Long, totalChild: Long, percent: String, percentChild: String, speed: Long, speedChild: Long, threadId: Int) {
         }
 
         override fun onComplete() {
@@ -187,14 +213,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-        private const val SIZE_1M = 1024 * 1024
+        private const val SIZE_1M = 1024 * 1024f
         private const val SIZE_MB = "MB"
         private const val SIZE_KB = "KB"
+        private const val FORMAT = "%.2f"
         internal fun calcSpeed(speed: Long): String {
             return if (speed >= SIZE_1M) {
-                (speed / SIZE_1M).toString() + SIZE_MB
+                String.format(FORMAT, (speed / SIZE_1M)) + SIZE_MB
             } else {
-                (speed / 1024).toString() + SIZE_KB
+                String.format(FORMAT, (speed / 1024f)) + SIZE_KB
             }
         }
     }

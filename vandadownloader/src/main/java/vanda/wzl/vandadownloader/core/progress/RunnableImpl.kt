@@ -16,26 +16,32 @@
 
 package vanda.wzl.vandadownloader.core.progress
 
-
-import android.os.Handler
-import android.os.Looper
-import android.os.Message
 import android.util.Log
 import vanda.wzl.vandadownloader.core.handler.MainHandler
-import vanda.wzl.vandadownloader.core.status.OnStatus
-import vanda.wzl.vandadownloader.core.threadpool.AutoAdjustThreadPool
 
-class HandlerProgress(looper: Looper) : Handler(looper) {
-    override fun handleMessage(msg: Message) {
-        when (msg.what) {
-            MSG_WRITE -> progressData(msg)
-            MSG_QIUT -> {
+class RunnableImpl(var progressData: ProgressData) : Runnable {
+    private var mNext: RunnableImpl? = null
+
+    fun reset() {
+    }
+
+    fun recycle() {
+        reset()
+        synchronized(sPoolSync) {
+            if (sPoolSize < MAX_POOL_SIZE) {
+                mNext = sPool
+                sPool = this
+                sPoolSize++
             }
         }
     }
 
-    private fun progressData(msg: Message) {
-        val progressData = msg.obj as ProgressData
+    override fun run() {
+        progressData(progressData)
+        recycle()
+    }
+
+    private fun progressData(progressData: ProgressData) {
         val sofar = progressData.exeProgressCalc?.exeProgressCalc()
         val speed = progressData.exeProgressCalc?.speedIncrement()
         val percent = String.format(FORMAT, sofar!! / progressData.total.toFloat())
@@ -60,7 +66,7 @@ class HandlerProgress(looper: Looper) : Handler(looper) {
             }
 
             vanda.wzl.vandadownloader.core.status.OnStatus.PROGRESS -> {
-                Log.d("vanda", "sofarChild = ${progressData.sofarChild} segment = ${progressData.totalChild} totalProgress = $sofar  percent = $percent percentChild = $percentChild speed = $speed speedChild = ${progressData.speedChild}  threadId = ${progressData.threadId}")
+                Log.d("vanda", "id = ${progressData.id} sofarChild = ${progressData.sofarChild} segment = ${progressData.totalChild} totalProgress = $sofar  percent = $percent percentChild = $percentChild speed = $speed speedChild = ${progressData.speedChild}  threadId = ${progressData.threadId}")
                 progressData.exeProgressCalc?.update(progressData.fillingRemarkMultiThreadPointSqlEntry())
                 progressData.exeProgressCalc?.update(progressData.fillingRemarkPointSqlEntry())
                 MainHandler.syncProgressDataToMain(progressData)
@@ -78,10 +84,6 @@ class HandlerProgress(looper: Looper) : Handler(looper) {
                     progressData.allComplete = true
                     progressData.exeProgressCalc?.deleteThreadInfo(progressData.id)
                     MainHandler.syncCompleteProgressDataToMain(progressData)
-
-                    postDelayed({
-                        AutoAdjustThreadPool.stop()
-                    }, 10 * 1000)
                 }
             }
 
@@ -113,9 +115,23 @@ class HandlerProgress(looper: Looper) : Handler(looper) {
     }
 
     companion object {
-        internal val MSG_WRITE = 0x1101
-        internal val MSG_QIUT = 0x1102
         private const val FORMAT = "%.2f"
-    }
+        private const val MAX_POOL_SIZE = 300
+        private val sPoolSync = Any()
+        private var sPoolSize = 0
+        private var sPool: RunnableImpl? = null
 
+        fun obtain(progressData: ProgressData): RunnableImpl {
+            synchronized(sPoolSync) {
+                return sPool?.let {
+                    val m = sPool
+                    sPool = m!!.mNext
+                    m.mNext = null
+                    sPoolSize--
+                    m.reset()
+                    m
+                } ?: RunnableImpl(progressData)
+            }
+        }
+    }
 }

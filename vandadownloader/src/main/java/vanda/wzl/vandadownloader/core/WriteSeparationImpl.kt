@@ -17,7 +17,7 @@
 package vanda.wzl.vandadownloader.core
 
 import vanda.wzl.vandadownloader.core.file.separation.WriteSeparation
-import vanda.wzl.vandadownloader.core.progress.GlobalSingleThreadHandlerProgress
+import vanda.wzl.vandadownloader.core.progress.HandlerProgressToThreadPool
 import vanda.wzl.vandadownloader.core.progress.ProgressData
 import java.io.IOException
 import java.io.OutputStream
@@ -118,7 +118,7 @@ internal class WriteSeparationImpl(
         progressData.segment = segment
         progressData.extSize = extSize
         progressData.supportMultiThread = supportMultiThread
-        GlobalSingleThreadHandlerProgress.ayncProgressData(progressData)
+        HandlerProgressToThreadPool.ayncProgressData(progressData)
     }
 
     override fun onWriteSegmentBytesToStore() {
@@ -159,7 +159,7 @@ internal class WriteSeparationImpl(
     }
 
     companion object {
-        private const val PROGRESS_INTVAL = 1000 //ms
+        private const val PROGRESS_INTVAL = 500 //ms
         private const val ONE_SECEND_TIME = 1000 //ms
     }
 }
