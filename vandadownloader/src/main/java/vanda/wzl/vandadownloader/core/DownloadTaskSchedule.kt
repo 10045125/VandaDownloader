@@ -100,7 +100,6 @@ class DownloadTaskSchedule(threadNum: Int, private val mDownloadTaskStatus: Down
     }
 
     private fun createFile() {
-//        mPath = Environment.getExternalStorageDirectory().absolutePath + "/weixin.apk"
         val file = File(mPath)
         if (!file.exists()) {
             file.createNewFile()

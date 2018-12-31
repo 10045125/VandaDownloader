@@ -17,6 +17,7 @@ import android.widget.Button
 import android.widget.SeekBar
 import android.widget.TextView
 import io.victoralbertos.breadcumbs_view.BreadcrumbsView
+import vanda.wzl.vandadownloader.VandaDownloader
 import vanda.wzl.vandadownloader.core.DownloadListener
 import vanda.wzl.vandadownloader.core.util.DownloadUtils
 import vanda.wzl.vandadownloader.core.util.SpeedUtils
@@ -124,6 +125,8 @@ class MainActivity : AppCompatActivity() {
         breadcrumbsView!!.setSegmentNum(mThreadNum)
         initRecyclerView()
         testDownload()
+
+        val request = VandaDownloader.Request.Builder()
     }
 
     fun pause() {

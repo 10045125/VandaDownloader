@@ -23,6 +23,7 @@ import java.lang.RuntimeException
 class DownloadContext  private constructor() {
 
     private var mContext: Context? = null
+    private var mDefaultPath: String = ""
 
     private object SingleHolder {
         @SuppressLint("StaticFieldLeak")
@@ -37,6 +38,10 @@ class DownloadContext  private constructor() {
 
         fun getContext(): Context {
             return SingleHolder.INSTANCE.mContext ?: throw RuntimeException("context is null")
+        }
+
+        fun getDefaultSaveRootPath(): String {
+            return SingleHolder.INSTANCE.mDefaultPath
         }
     }
 
