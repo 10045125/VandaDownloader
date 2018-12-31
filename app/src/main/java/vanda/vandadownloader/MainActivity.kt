@@ -27,6 +27,8 @@ class MainActivity : AppCompatActivity() {
     private var url_wangzhe = "http://dlied5.myapp.com/myapp/1104466820/sgame/2017_com.tencent.tmgp.sgame_h177_1.42.1.6_a6157f.apk"
     private val url_weixin = "https://dldir1.qq.com/weixin/android/weixin673android1360.apk"
     private val url_uc = "https://wap3.ucweb.com/files/UCBrowser/zh-cn/999/UCBrowser_V12.2.4.1004_android_pf145_(Build181221104439).apk?auth_key=1546841763-0-0-027797a9e742e60492129100eb7049aa&SESSID=5d7eb191-4076-4d42-8867-f8349374294c"
+    private val  url_qq = "https://qd.myapp.com/myapp/qqteam/AndroidQQ/mobileqq_android.apk"
+    private val  url_taobao = "http://download.alicdn.com/wireless/taobao4android/latest/702757.apk"
 //    private val url = "https://aq.qq.com/cn2/manage/mbtoken/mbtoken_download?Android=1&source_id=2886"
 //    private val url = "https://aq.qq.com/cn2/manage/mbtoken/mbtoken_download?Android=1&source_id=2886"
 //    private val url = "http://cn.club.vmall.com/forum.php?mod=attachment&aid=MjkzMzgwOXxiODViYzM3MnwxNDg5NTEyMzcxfDcxMjE1OTh8NTc4MjA3Mw%3D%3D"
@@ -104,7 +106,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         mBtnClean!!.setOnClickListener {
-            downloadTaskSchedule?.clean()
+            downloadTaskSchedule?.clean(DownloadUtils.generateId(url_wangzhe, path_wangzhe))
+            downloadTaskSchedule?.clean(DownloadUtils.generateId(url_weixin, path_weixin))
+            downloadTaskSchedule?.clean(DownloadUtils.generateId(url_uc, path_uc))
+            downloadTaskSchedule?.clean(DownloadUtils.generateId(url_qq, path_qq))
+            downloadTaskSchedule?.clean(DownloadUtils.generateId(url_taobao, path_taobao))
         }
 
         mBtnDelete!!.setOnClickListener {
@@ -124,12 +130,16 @@ class MainActivity : AppCompatActivity() {
         downloadTaskSchedule?.pause(DownloadUtils.generateId(url_wangzhe, path_wangzhe))
         downloadTaskSchedule?.pause(DownloadUtils.generateId(url_weixin, path_weixin))
         downloadTaskSchedule?.pause(DownloadUtils.generateId(url_uc, path_uc))
+        downloadTaskSchedule?.pause(DownloadUtils.generateId(url_qq, path_qq))
+        downloadTaskSchedule?.pause(DownloadUtils.generateId(url_taobao, path_taobao))
     }
 
     var downloadTaskSchedule: MultiDownloadTaskDispather? = null
     val path_weixin = Environment.getExternalStorageDirectory().absolutePath + "/weixin_.apk"
     val path_wangzhe = Environment.getExternalStorageDirectory().absolutePath + "/wangzherongyao.apk"
     val path_uc = Environment.getExternalStorageDirectory().absolutePath + "/uc.apk"
+    val path_qq = Environment.getExternalStorageDirectory().absolutePath + "/qq.apk"
+    val path_taobao = Environment.getExternalStorageDirectory().absolutePath + "/taobao.apk"
 
     private fun testDownload() {
         downloadTaskSchedule = MultiDownloadTaskDispather()
@@ -140,6 +150,10 @@ class MainActivity : AppCompatActivity() {
                 0, 1, false, HashMap<String, String>(), false, false, "", 0, "")
 
         downloadTaskSchedule?.start(url_uc, VandaDownloadListener(this), mThreadNum, path_uc, true, 0,
+                0, 1, false, HashMap<String, String>(), false, false, "", 0, "")
+        downloadTaskSchedule?.start(url_qq, VandaDownloadListener(this), mThreadNum, path_qq, true, 0,
+                0, 1, false, HashMap<String, String>(), false, false, "", 0, "")
+        downloadTaskSchedule?.start(url_taobao, VandaDownloadListener(this), mThreadNum, path_taobao, true, 0,
                 0, 1, false, HashMap<String, String>(), false, false, "", 0, "")
     }
 

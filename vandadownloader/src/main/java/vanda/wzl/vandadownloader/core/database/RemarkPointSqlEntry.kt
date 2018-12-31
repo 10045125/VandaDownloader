@@ -53,6 +53,8 @@ class RemarkPointSqlEntry(var cursor: Cursor?) {
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+            } finally {
+                cursor?.close()
             }
         }
     }

@@ -242,17 +242,4 @@ class DownloadTaskSchedule(threadNum: Int, private val mDownloadTaskStatus: Down
         }
         return allPauseComplete
     }
-
-    fun clean() {
-        delete(mDownloadId)
-        deleteThreadInfo(mDownloadId)
-    }
-
-    fun deletefile() {
-//        mPath = Environment.getExternalStorageDirectory().absolutePath + "/weixin.apk"
-        val file = File(mPath)
-        if (file.exists()) {
-            file.delete()
-        }
-    }
 }

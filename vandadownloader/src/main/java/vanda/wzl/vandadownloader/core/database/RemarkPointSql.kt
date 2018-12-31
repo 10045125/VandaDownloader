@@ -17,6 +17,7 @@
 package vanda.wzl.vandadownloader.core.database
 
 interface RemarkPointSql {
+    fun remarkPointSqlEntrys(): ArrayList<RemarkPointSqlEntry>
     fun remarkPointSqlEntry(id: Int): RemarkPointSqlEntry
     fun insert(remarkPointSqlEntry: RemarkPointSqlEntry)
     fun update(remarkPointSqlEntry: RemarkPointSqlEntry)

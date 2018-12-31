@@ -21,11 +21,15 @@ import vanda.wzl.vandadownloader.core.database.RemarkPointSql
 import vanda.wzl.vandadownloader.core.database.RemarkPointSqlEntry
 import vanda.wzl.vandadownloader.core.database.RemarkPointSqlImpl
 
-abstract class AbstractDownloadTaskSchedule() : ExeProgressCalc {
+abstract class AbstractDownloadTaskSchedule : ExeProgressCalc {
     private val mRemarkPointSql: RemarkPointSql
 
     init {
         mRemarkPointSql = RemarkPointSqlImpl()
+    }
+
+    override fun remarkPointSqlEntrys(): ArrayList<RemarkPointSqlEntry> {
+        return mRemarkPointSql.remarkPointSqlEntrys()
     }
 
     override fun remarkPointSqlEntry(id: Int): RemarkPointSqlEntry {

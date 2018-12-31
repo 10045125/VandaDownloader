@@ -25,6 +25,24 @@ class RemarkPointSqlImpl : RemarkPointSql {
 
     private val db: SQLiteDatabase = DefaultSQLiteOpenHelper.getSQLiteDatabase()
 
+    override fun remarkPointSqlEntrys(): ArrayList<RemarkPointSqlEntry> {
+        val cursor = db.rawQuery("SELECT * FROM ${RemarkPointSqlKey.TABLE_NAME}", null)
+        val list = ArrayList<RemarkPointSqlEntry>()
+        while (cursor != null && cursor.moveToNext()) {
+            list.add(RemarkPointSqlEntry().fillingValue(
+                    cursor.getInt(cursor.getColumnIndex(RemarkPointSqlKey.ID)),
+                    cursor.getString(cursor.getColumnIndex(RemarkPointSqlKey.URL)),
+                    cursor.getString(cursor.getColumnIndex(RemarkPointSqlKey.PATH)),
+                    cursor.getLong(cursor.getColumnIndex(RemarkPointSqlKey.SOFAR)),
+                    cursor.getLong(cursor.getColumnIndex(RemarkPointSqlKey.TOTAL)),
+                    cursor.getInt(cursor.getColumnIndex(RemarkPointSqlKey.STATUS)),
+                    cursor.getInt(cursor.getColumnIndex(RemarkPointSqlKey.FILECONTIUE)) == 1
+            ))
+        }
+        cursor?.close()
+        return list
+    }
+
     override fun remarkPointSqlEntry(id: Int): RemarkPointSqlEntry {
         val cursor = db.rawQuery("select * from " + RemarkPointSqlKey.TABLE_NAME + " where " + RemarkPointSqlKey.ID + "=?", arrayOf(id.toString()))
         return RemarkPointSqlEntry(cursor)

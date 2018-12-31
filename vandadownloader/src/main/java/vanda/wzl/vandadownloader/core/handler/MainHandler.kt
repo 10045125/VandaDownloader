@@ -19,6 +19,7 @@ package vanda.wzl.vandadownloader.core.handler
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
+import android.util.Log
 import vanda.wzl.vandadownloader.core.progress.ProgressData
 import vanda.wzl.vandadownloader.core.status.OnStatus
 
@@ -39,13 +40,6 @@ class MainHandler {
         private const val MSG_PRO_DATA = 0x1111
 
         fun syncProgressDataToMain(progressData: ProgressData) {
-            val msg = Message.obtain()
-            msg.what = MSG_PRO_DATA
-            msg.obj = progressData
-            SingleHolder.INSTANCE.mHandler.sendMessage(msg)
-        }
-
-        fun syncCompleteProgressDataToMain(progressData: ProgressData) {
             val msg = Message.obtain()
             msg.what = MSG_PRO_DATA
             msg.obj = progressData
@@ -92,6 +86,7 @@ class MainHandler {
         }
 
         private fun progress(progressData: ProgressData) {
+            Log.e("vanda", "id = ${progressData.id}, threadId = ${progressData.threadId}, percentChild = ${progressData.percentChild}")
             progressData.downloadListener?.onProgress(
                     progressData.sofar,
                     progressData.sofarChild,

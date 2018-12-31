@@ -18,7 +18,9 @@ package vanda.wzl.vandadownloader.multitask
 
 import vanda.wzl.vandadownloader.core.DownloadListener
 import vanda.wzl.vandadownloader.core.DownloadTaskSchedule
+import vanda.wzl.vandadownloader.core.database.RemarkPointSqlImpl
 import vanda.wzl.vandadownloader.core.util.DownloadUtils
+import java.io.File
 
 class MultiDownloadTaskDispather : TaskDispatherAttribute {
 
@@ -27,7 +29,7 @@ class MultiDownloadTaskDispather : TaskDispatherAttribute {
     private var mDownloadTaskSchedule: DownloadTaskSchedule? = null
 
 
-    override fun start(url: String, listener: DownloadListener, threadNum: Int , path: String, pathAsDirectory: Boolean, callbackProgressTimes: Int, callbackProgressMinIntervalMillis: Int, autoRetryTimes: Int, forceReDownload: Boolean, header: Map<String, String>, isWifiRequired: Boolean, isGroup: Boolean, postBody: String, fileSize: Long, updateUrl: String) {
+    override fun start(url: String, listener: DownloadListener, threadNum: Int, path: String, pathAsDirectory: Boolean, callbackProgressTimes: Int, callbackProgressMinIntervalMillis: Int, autoRetryTimes: Int, forceReDownload: Boolean, header: Map<String, String>, isWifiRequired: Boolean, isGroup: Boolean, postBody: String, fileSize: Long, updateUrl: String) {
         if (!isDownloading(url, path)) {
             mDownloadTaskSchedule = DownloadTaskSchedule(threadNum, mDownloadTaskPool, url, listener, path)
             mDownloadTaskPool.execTask(mDownloadTaskSchedule!!)
@@ -67,12 +69,22 @@ class MultiDownloadTaskDispather : TaskDispatherAttribute {
     }
 
 
-    fun clean() {
-        mDownloadTaskSchedule!!.clean()
+    fun clean(downloadId: Int) {
+        val remarkPointSqlImpl = RemarkPointSqlImpl()
+        remarkPointSqlImpl.delete(downloadId)
+        remarkPointSqlImpl.deleteThreadInfo(downloadId)
+
     }
 
     fun deletefile() {
-        mDownloadTaskSchedule!!.deletefile()
+        val remarkPointSqlImpl = RemarkPointSqlImpl()
+        val list = remarkPointSqlImpl.remarkPointSqlEntrys()
+        for (remarkPointEntry in list) {
+            val file = File(remarkPointEntry.path)
+            if (file.exists()) {
+                file.delete()
+            }
+        }
     }
 
 }

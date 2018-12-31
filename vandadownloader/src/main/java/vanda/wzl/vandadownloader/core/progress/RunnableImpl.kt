@@ -79,12 +79,11 @@ class RunnableImpl(var progressData: ProgressData) : Runnable {
                 progressData.exeProgressCalc?.update(progressData.fillingRemarkMultiThreadPointSqlEntry())
                 progressData.exeProgressCalc?.update(progressData.fillingRemarkPointSqlEntry())
 
-                MainHandler.syncProgressDataToMain(progressData)
                 if (allComplete!!) {
                     progressData.allComplete = true
                     progressData.exeProgressCalc?.deleteThreadInfo(progressData.id)
-                    MainHandler.syncCompleteProgressDataToMain(progressData)
                 }
+                MainHandler.syncProgressDataToMain(progressData)
             }
 
             vanda.wzl.vandadownloader.core.status.OnStatus.PAUSE -> {
