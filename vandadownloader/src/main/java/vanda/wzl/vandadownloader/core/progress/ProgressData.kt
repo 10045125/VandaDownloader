@@ -34,8 +34,8 @@ class ProgressData {
     var totalChild: Long = 0
     var speed: Long = 0
     var speedChild: Long = 0
-    var percent = "0.00"
-    var percentChild = "0.00"
+    var percent = 0.00f
+    var percentChild = 0.00f
     var threadId: Int = 0
     var supportMultiThread = false
 
@@ -43,6 +43,8 @@ class ProgressData {
     var extSize: Long = 0
 
     var allComplete: Boolean = false
+
+    var isInit = false
 
     @vanda.wzl.vandadownloader.core.status.OnStatus
     var status: Int = 0
@@ -66,12 +68,12 @@ class ProgressData {
     private fun reset() {
         id = -1
 
-        sofar = 0
+        sofar = -1
         sofarChild = -1
         total = -1
         totalChild = 0
-        percent = "0.00"
-        percentChild = "0.00"
+        percent = 00.00f
+        percentChild = 0.00f
         speed = 0
         speedChild = 0
         threadId = 0
@@ -79,6 +81,7 @@ class ProgressData {
         extSize = 0
         allComplete = false
         supportMultiThread = false
+        isInit = false
 
         status = -1
         downloadListener = null
@@ -99,7 +102,7 @@ class ProgressData {
     }
 
     companion object {
-        private const val MAX_POOL_SIZE = 300
+        private const val MAX_POOL_SIZE = 500
         private val sPoolSync = Any()
         private var sPoolSize = 0
         private var sPool: ProgressData? = null

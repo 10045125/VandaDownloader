@@ -17,8 +17,7 @@
 package vanda.wzl.vandadownloader.core
 
 import vanda.wzl.vandadownloader.core.file.separation.WriteSeparation
-import vanda.wzl.vandadownloader.core.progress.HandlerProgressToThreadPool
-import vanda.wzl.vandadownloader.core.progress.ProgressData
+import vanda.wzl.vandadownloader.core.file.separation.WriteSeparation.Companion.fillProgressData
 import java.io.IOException
 import java.io.OutputStream
 import java.util.*
@@ -41,7 +40,6 @@ internal class WriteSeparationImpl(
     private var extSize: Long = 0
     private var status: Int = vanda.wzl.vandadownloader.core.status.OnStatus.INVALID
     private var exeProgressCalc: ExeProgressCalc? = null
-    private var downloadListener: DownloadListener? = null
     private var url: String = ""
     private var path: String = ""
     private var supportMultiThread: Boolean = false
@@ -74,10 +72,6 @@ internal class WriteSeparationImpl(
         this.exeProgressCalc = exeProgressCalc
     }
 
-    override fun downloadListener(downloadListener: DownloadListener) {
-        this.downloadListener = downloadListener
-    }
-
     override fun segment(segment: Long) {
         this.segment = segment
     }
@@ -102,25 +96,6 @@ internal class WriteSeparationImpl(
         return PROGRESS_INTVAL
     }
 
-    private fun fillProgressData(speedChild: Long) {
-        val progressData = ProgressData.obtain()
-        progressData.sofarChild = sofar
-        progressData.total = total
-        progressData.totalChild = segment
-        progressData.id = id
-        progressData.threadId = threadId
-        progressData.speedChild = speedChild
-        progressData.status = status
-        progressData.exeProgressCalc = exeProgressCalc
-        progressData.downloadListener = downloadListener
-        progressData.url = url
-        progressData.path = path
-        progressData.segment = segment
-        progressData.extSize = extSize
-        progressData.supportMultiThread = supportMultiThread
-        HandlerProgressToThreadPool.ayncProgressData(progressData)
-    }
-
     override fun onWriteSegmentBytesToStore() {
         try {
             mQuarkBufferedSink.emit()
@@ -138,7 +113,7 @@ internal class WriteSeparationImpl(
                     mOutputStream?.close()
                 }
 
-                fillProgressData(mSpeedIncrement)
+                fillProgressData(mSpeedIncrement, sofar, total, segment, id, threadId, url, path, extSize, supportMultiThread, exeProgressCalc, status)
             }
         } catch (e: IOException) {
             e.printStackTrace()
@@ -159,7 +134,7 @@ internal class WriteSeparationImpl(
     }
 
     companion object {
-        private const val PROGRESS_INTVAL = 500 //ms
+        private const val PROGRESS_INTVAL = 1000 //ms
         private const val ONE_SECEND_TIME = 1000 //ms
     }
 }

@@ -16,10 +16,9 @@
 
 package vanda.wzl.vandadownloader.core.file.separation
 
-import vanda.wzl.vandadownloader.core.DownloadListener
 import vanda.wzl.vandadownloader.core.ExeProgressCalc
-import vanda.wzl.vandadownloader.core.progress.HandlerProgressToThreadPool
 import vanda.wzl.vandadownloader.core.progress.ProgressData
+import vanda.wzl.vandadownloader.core.status.OnStatus
 
 
 interface WriteSeparation {
@@ -35,29 +34,35 @@ interface WriteSeparation {
     fun time(time: Long)
     fun segment(segment: Long)
     fun extSize(extSize: Long)
-    fun downloadListener(downloadListener: DownloadListener)
     fun url(url: String)
     fun path(path: String)
     fun supportMultiThread(supportMultiThread: Boolean)
 
     companion object {
-        fun alreadyComplete(sofar: Long, total: Long, segment: Long, id: Int, threadId: Int, url: String, path: String, extSize: Long, supportMultiThread: Boolean, exeProgressCalc: ExeProgressCalc, downloadListener: DownloadListener) {
+        fun alreadyComplete(sofar: Long, total: Long, segment: Long, id: Int, threadId: Int, url: String, path: String, extSize: Long, supportMultiThread: Boolean, exeProgressCalc: ExeProgressCalc) {
+            fillProgressData(0, sofar, total, segment, id, threadId, url, path, extSize, supportMultiThread, exeProgressCalc, OnStatus.COMPLETE)
+        }
+
+        fun fillProgressData(speedChild: Long, sofar: Long, total: Long, segment: Long, id: Int, threadId: Int, url: String, path: String, extSize: Long, supportMultiThread: Boolean, exeProgressCalc: ExeProgressCalc?, status: Int) {
             val progressData = ProgressData.obtain()
             progressData.sofarChild = sofar
             progressData.total = total
             progressData.totalChild = segment
             progressData.id = id
             progressData.threadId = threadId
-            progressData.speedChild = 0
-            progressData.status = vanda.wzl.vandadownloader.core.status.OnStatus.COMPLETE
+            progressData.speedChild = speedChild
+            progressData.status = status
             progressData.exeProgressCalc = exeProgressCalc
-            progressData.downloadListener = downloadListener
             progressData.url = url
             progressData.path = path
             progressData.segment = segment
             progressData.extSize = extSize
             progressData.supportMultiThread = supportMultiThread
-            HandlerProgressToThreadPool.ayncProgressData(progressData)
+            progressData.isInit = true
+            progressData.percentChild = progressData.sofarChild.toFloat() / progressData.totalChild.toFloat()
+            progressData.exeProgressCalc?.proProgressData(progressData)
+
+//            HandlerProgressToThreadPool.ayncProgressData(progressData)
         }
     }
 }

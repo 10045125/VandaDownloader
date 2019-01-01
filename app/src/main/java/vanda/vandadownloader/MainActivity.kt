@@ -21,6 +21,7 @@ import vanda.wzl.vandadownloader.VandaDownloader
 import vanda.wzl.vandadownloader.core.DownloadListener
 import vanda.wzl.vandadownloader.core.util.DownloadUtils
 import vanda.wzl.vandadownloader.core.util.SpeedUtils
+import vanda.wzl.vandadownloader.multitask.DownloadTask
 import vanda.wzl.vandadownloader.multitask.MultiDownloadTaskDispather
 
 class MainActivity : AppCompatActivity() {
@@ -28,8 +29,8 @@ class MainActivity : AppCompatActivity() {
     private var url_wangzhe = "http://dlied5.myapp.com/myapp/1104466820/sgame/2017_com.tencent.tmgp.sgame_h177_1.42.1.6_a6157f.apk"
     private val url_weixin = "https://dldir1.qq.com/weixin/android/weixin673android1360.apk"
     private val url_uc = "https://wap3.ucweb.com/files/UCBrowser/zh-cn/999/UCBrowser_V12.2.4.1004_android_pf145_(Build181221104439).apk?auth_key=1546841763-0-0-027797a9e742e60492129100eb7049aa&SESSID=5d7eb191-4076-4d42-8867-f8349374294c"
-    private val  url_qq = "https://qd.myapp.com/myapp/qqteam/AndroidQQ/mobileqq_android.apk"
-    private val  url_taobao = "http://download.alicdn.com/wireless/taobao4android/latest/702757.apk"
+    private val url_qq = "https://qd.myapp.com/myapp/qqteam/AndroidQQ/mobileqq_android.apk"
+    private val url_taobao = "http://download.alicdn.com/wireless/taobao4android/latest/702757.apk"
 //    private val url = "https://aq.qq.com/cn2/manage/mbtoken/mbtoken_download?Android=1&source_id=2886"
 //    private val url = "https://aq.qq.com/cn2/manage/mbtoken/mbtoken_download?Android=1&source_id=2886"
 //    private val url = "http://cn.club.vmall.com/forum.php?mod=attachment&aid=MjkzMzgwOXxiODViYzM3MnwxNDg5NTEyMzcxfDcxMjE1OTh8NTc4MjA3Mw%3D%3D"
@@ -107,15 +108,15 @@ class MainActivity : AppCompatActivity() {
         }
 
         mBtnClean!!.setOnClickListener {
-            downloadTaskSchedule?.clean(DownloadUtils.generateId(url_wangzhe, path_wangzhe))
-            downloadTaskSchedule?.clean(DownloadUtils.generateId(url_weixin, path_weixin))
-            downloadTaskSchedule?.clean(DownloadUtils.generateId(url_uc, path_uc))
-            downloadTaskSchedule?.clean(DownloadUtils.generateId(url_qq, path_qq))
-            downloadTaskSchedule?.clean(DownloadUtils.generateId(url_taobao, path_taobao))
+            VandaDownloader.clean(DownloadUtils.generateId(url_wangzhe, path_wangzhe))
+            VandaDownloader.clean(DownloadUtils.generateId(url_weixin, path_weixin))
+            VandaDownloader.clean(DownloadUtils.generateId(url_uc, path_uc))
+            VandaDownloader.clean(DownloadUtils.generateId(url_qq, path_qq))
+            VandaDownloader.clean(DownloadUtils.generateId(url_taobao, path_taobao))
         }
 
         mBtnDelete!!.setOnClickListener {
-            downloadTaskSchedule?.deletefile()
+            VandaDownloader.deletefile()
         }
 
         pp()
@@ -125,19 +126,16 @@ class MainActivity : AppCompatActivity() {
         breadcrumbsView!!.setSegmentNum(mThreadNum)
         initRecyclerView()
         testDownload()
-
-        val request = VandaDownloader.Request.Builder()
     }
 
-    fun pause() {
-        downloadTaskSchedule?.pause(DownloadUtils.generateId(url_wangzhe, path_wangzhe))
-        downloadTaskSchedule?.pause(DownloadUtils.generateId(url_weixin, path_weixin))
-        downloadTaskSchedule?.pause(DownloadUtils.generateId(url_uc, path_uc))
-        downloadTaskSchedule?.pause(DownloadUtils.generateId(url_qq, path_qq))
-        downloadTaskSchedule?.pause(DownloadUtils.generateId(url_taobao, path_taobao))
+    private fun pause() {
+        VandaDownloader.pause(DownloadUtils.generateId(url_wangzhe, path_wangzhe))
+        VandaDownloader.pause(DownloadUtils.generateId(url_weixin, path_weixin))
+        VandaDownloader.pause(DownloadUtils.generateId(url_uc, path_uc))
+        VandaDownloader.pause(DownloadUtils.generateId(url_qq, path_qq))
+        VandaDownloader.pause(DownloadUtils.generateId(url_taobao, path_taobao))
     }
 
-    var downloadTaskSchedule: MultiDownloadTaskDispather? = null
     val path_weixin = Environment.getExternalStorageDirectory().absolutePath + "/weixin_.apk"
     val path_wangzhe = Environment.getExternalStorageDirectory().absolutePath + "/wangzherongyao.apk"
     val path_uc = Environment.getExternalStorageDirectory().absolutePath + "/uc.apk"
@@ -145,64 +143,41 @@ class MainActivity : AppCompatActivity() {
     val path_taobao = Environment.getExternalStorageDirectory().absolutePath + "/taobao.apk"
 
     private fun testDownload() {
-        downloadTaskSchedule = MultiDownloadTaskDispather()
-        downloadTaskSchedule?.start(url_wangzhe, MyDownloadListener(this), mThreadNum, path_wangzhe, true, 0,
-                0, 1, false, HashMap<String, String>(), false, false, "", 0, "")
+        val request = VandaDownloader.Request.Builder()
+                .url(url_wangzhe)
+                .path(path_wangzhe)
+                .threadNum(3)
+                .build()
 
-        downloadTaskSchedule?.start(url_weixin, VandaDownloadListener(this), mThreadNum, path_weixin, true, 0,
-                0, 1, false, HashMap<String, String>(), false, false, "", 0, "")
+        val mDownloadTask = VandaDownloader.createDownloadTask(request).addOnStateChangeListener(object : DownloadListener {
+            @SuppressLint("SetTextI18n")
+            override fun onProgress(sofar: Long, sofarChild: Long, total: Long, totalChild: Long, percent: Float, percentChild: Float, speed: Long, speedChild: Long, threadId: Int) {
+                breadcrumbsView!!.nextStep(threadId, java.lang.Float.valueOf(percentChild))
+                mTextViewProgress!!.text = String.format("%s/%s", SpeedUtils.formatSize(sofar), SpeedUtils.formatSize(total))
+                mTextViewSpeed!!.text = if (percent < 1f) String.format("%s/s", calcSpeed(speed)) else "complete"
+                mTextViewTime!!.text = "${(sofar * 100 / total).toInt()}%"
 
-        downloadTaskSchedule?.start(url_uc, VandaDownloadListener(this), mThreadNum, path_uc, true, 0,
-                0, 1, false, HashMap<String, String>(), false, false, "", 0, "")
-        downloadTaskSchedule?.start(url_qq, VandaDownloadListener(this), mThreadNum, path_qq, true, 0,
-                0, 1, false, HashMap<String, String>(), false, false, "", 0, "")
-        downloadTaskSchedule?.start(url_taobao, VandaDownloadListener(this), mThreadNum, path_taobao, true, 0,
-                0, 1, false, HashMap<String, String>(), false, false, "", 0, "")
+                val itemData = mAdapter!!.getItemData(threadId)
+                itemData.title = "Segment$threadId (${SpeedUtils.formatSize(threadId * totalChild)} ~ ${SpeedUtils.formatSize((threadId + 1) * totalChild)})"
+                itemData.progress = percentChild
+                itemData.speed = if (percentChild < 1f) String.format("%s/s", calcSpeed(speedChild)) else "complete"
+
+                mAdapter!!.notifyItemChanged(threadId)
+            }
+
+            override fun onComplete() {
+//            activity.mIsStart = false
+            }
+
+            override fun onPause() {
+                Log.i("vanda", "onPause complete")
+//            activity.mIsStart = false
+            }
+
+        })
+
+        mDownloadTask.start()
     }
-
-
-    private class MyDownloadListener(var activity: MainActivity) : DownloadListener {
-        @SuppressLint("SetTextI18n")
-        override fun onProgress(sofar: Long, sofarChild: Long, total: Long, totalChild: Long, percent: String, percentChild: String, speed: Long, speedChild: Long, threadId: Int) {
-            activity.breadcrumbsView!!.nextStep(threadId, java.lang.Float.valueOf(percentChild))
-            activity.mTextViewProgress!!.text = String.format("%s/%s", SpeedUtils.formatSize(sofar), SpeedUtils.formatSize(total))
-            activity.mTextViewSpeed!!.text = if (percent.toFloat() < 1f) String.format("%s/s", calcSpeed(speed)) else "complete"
-            activity.mTextViewTime!!.text = "${(sofar * 100 / total).toInt()}%"
-
-            val itemData = activity.mAdapter!!.getItemData(threadId)
-            itemData.title = "Segment$threadId (${SpeedUtils.formatSize(threadId * totalChild)} ~ ${SpeedUtils.formatSize((threadId + 1) * totalChild)})"
-            itemData.progress = percentChild
-            itemData.speed = if (percentChild.toFloat() < 1f) String.format("%s/s", calcSpeed(speedChild)) else "complete"
-
-            activity.mAdapter!!.notifyItemChanged(threadId)
-        }
-
-        override fun onComplete() {
-//            activity.mIsStart = false
-        }
-
-        override fun onPause() {
-            Log.i("vanda", "onPause complete")
-//            activity.mIsStart = false
-        }
-    }
-
-
-    private class VandaDownloadListener(var activity: MainActivity) : DownloadListener {
-        @SuppressLint("SetTextI18n")
-        override fun onProgress(sofar: Long, sofarChild: Long, total: Long, totalChild: Long, percent: String, percentChild: String, speed: Long, speedChild: Long, threadId: Int) {
-        }
-
-        override fun onComplete() {
-//            activity.mIsStart = false
-        }
-
-        override fun onPause() {
-            Log.i("vanda", "onPause complete")
-//            activity.mIsStart = false
-        }
-    }
-
 
     private fun initRecyclerView() {
         mRecyclerView = findViewById(R.id.recyclerview)
@@ -213,7 +188,7 @@ class MainActivity : AppCompatActivity() {
         val list = ArrayList<ItemData>()
 
         for (i in 1..mThreadNum) {
-            val itemData = ItemData("Segment${(i - 1)}", "0KB/s", "0.00")
+            val itemData = ItemData("Segment${(i - 1)}", "0KB/s", 0.00f)
             list.add(itemData)
         }
 

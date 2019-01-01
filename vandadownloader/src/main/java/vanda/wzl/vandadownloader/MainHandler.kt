@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 YY Inc
+ * Copyright (c) 2019 YY Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 
-package vanda.wzl.vandadownloader.core.handler
+package vanda.wzl.vandadownloader
 
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
 import android.util.Log
+import android.util.SparseArray
+import vanda.wzl.vandadownloader.core.DownloadListener
 import vanda.wzl.vandadownloader.core.progress.ProgressData
 import vanda.wzl.vandadownloader.core.status.OnStatus
+import vanda.wzl.vandadownloader.multitask.DownloadTask
 
 class MainHandler {
 
     private val mHandler: Handler
+    private val downloadListenerSparseArray: SparseArray<DownloadListener> = SparseArray()
 
     private object SingleHolder {
         internal val INSTANCE = MainHandler()
@@ -38,6 +42,11 @@ class MainHandler {
     companion object {
 
         private const val MSG_PRO_DATA = 0x1111
+
+        @Synchronized
+        internal fun remarkDownloadListener(downloadTask: DownloadTask) {
+            SingleHolder.INSTANCE.downloadListenerSparseArray.put(downloadTask.getId(), downloadTask.getOnStateChangeListener())
+        }
 
         fun syncProgressDataToMain(progressData: ProgressData) {
             val msg = Message.obtain()
@@ -65,6 +74,7 @@ class MainHandler {
 
                 vanda.wzl.vandadownloader.core.status.OnStatus.COMPLETE -> {
                     progress(progressData)
+                    complete(progressData)
                 }
 
                 vanda.wzl.vandadownloader.core.status.OnStatus.PAUSE -> {
@@ -81,13 +91,23 @@ class MainHandler {
             progressData.recycle()
         }
 
+        private fun getListener(progressData: ProgressData): DownloadListener? {
+            return SingleHolder.INSTANCE.downloadListenerSparseArray.get(progressData.id)
+        }
+
+        private fun removeListener(progressData: ProgressData) {
+            SingleHolder.INSTANCE.downloadListenerSparseArray.remove(progressData.id)
+        }
+
         private fun pause(progressData: ProgressData) {
-            progressData.downloadListener?.onPause()
+            getListener(progressData)?.onPause()
+            removeListener(progressData)
+            Log.e("vanda", "size = ${SingleHolder.INSTANCE.downloadListenerSparseArray.size()}")
         }
 
         private fun progress(progressData: ProgressData) {
-            Log.e("vanda", "id = ${progressData.id}, threadId = ${progressData.threadId}, percentChild = ${progressData.percentChild}")
-            progressData.downloadListener?.onProgress(
+            Log.e("vanda", "id = ${progressData.id}, threadId = ${progressData.threadId}, percentChild = ${progressData.percentChild} sofarChild = ${progressData.sofarChild} totalChild = ${progressData.totalChild} sofar = ${progressData.sofar}, total = ${progressData.total} isInit = ${progressData.isInit}")
+             getListener(progressData)?.onProgress(
                     progressData.sofar,
                     progressData.sofarChild,
                     progressData.total,
@@ -100,6 +120,13 @@ class MainHandler {
             )
         }
 
+        private fun complete(progressData: ProgressData) {
+            if (progressData.allComplete && progressData.status == OnStatus.COMPLETE) {
+                removeListener(progressData)
+                getListener(progressData)?.onComplete()
+                Log.e("vanda", "size = ${SingleHolder.INSTANCE.downloadListenerSparseArray.size()}")
+            }
+        }
     }
 
     private class MHandler : Handler(Looper.getMainLooper()) {

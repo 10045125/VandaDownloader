@@ -18,38 +18,76 @@ package vanda.wzl.vandadownloader
 
 import android.text.TextUtils
 import vanda.wzl.vandadownloader.core.DownloadContext
+import vanda.wzl.vandadownloader.core.util.DownloadUtils
 import vanda.wzl.vandadownloader.core.util.MimeUtils
+import vanda.wzl.vandadownloader.multitask.DownloadTask
+import vanda.wzl.vandadownloader.multitask.MultiDownloadTaskDispather
 import java.io.File
 
 class VandaDownloader {
 
+    companion object {
+
+        private val mMultiDownloadTaskDispather = MultiDownloadTaskDispather()
+
+        fun createDownloadTask(request: Request): DownloadTask {
+            return DownloadTaskImpl(DownloadUtils.generateId(request.builder.url, request.builder.path), request)
+        }
+
+        fun getTotal(downloadId: Int): Long {
+            return mMultiDownloadTaskDispather.getTotal(downloadId)
+        }
+
+        fun getStatus(downloadId: Int): Int {
+            return mMultiDownloadTaskDispather.getStatus(downloadId)
+        }
+
+        fun getSoFar(downloadId: Int): Long {
+            return mMultiDownloadTaskDispather.getSofar(downloadId)
+        }
+
+        internal fun start(url: String, threadNum: Int, path: String, callbackProgressTimes: Int, callbackProgressMinIntervalMillis: Int, autoRetryTimes: Int, forceReDownload: Boolean, header: Map<String, String>, isWifiRequired: Boolean, postBody: String) {
+            mMultiDownloadTaskDispather.start(url, threadNum, path, callbackProgressTimes, callbackProgressMinIntervalMillis, autoRetryTimes, forceReDownload, header, isWifiRequired, postBody)
+        }
+
+        fun pause(downloadId: Int) {
+            mMultiDownloadTaskDispather.pause(downloadId)
+        }
+
+        fun clean(downloadId: Int) {
+            mMultiDownloadTaskDispather.clean(downloadId)
+        }
+
+        fun deletefile() {
+            mMultiDownloadTaskDispather.deletefile()
+        }
+    }
 
     class Request private constructor(/* package */
             internal var builder: Builder) {
 
         class Builder {
-
             /**
              *
              */
             /* package */
-            internal var url: String? = null
+            internal  var url: String = ""
             /**
              *
              */
-            internal var refUrl: String? = null
+            internal  var refUrl: String = ""
             /**
              *
              */
-            internal var mimeType: String? = null
+            internal  var mimeType: String = ""
             /**
              *
              */
-            internal var title: String? = null
+            internal  var title: String = ""
             /**
              *
              */
-            internal var path: String? = null
+            internal  var path: String = ""
             /**
              *
              */
@@ -58,36 +96,15 @@ class VandaDownloader {
              *
              */
             internal var isRename = true
-            /**
-             *
-             */
-            internal var isVideoCache: Boolean = false
-            /**
-             *
-             */
-            internal var model: Int = 0
-            /**
-             *
-             */
-            internal var isVerificationFile: Boolean = false
-            /**
-             *
-             */
-            internal var verificationFileInfo = ""
-            /**
-             *
-             */
             internal var postBody = ""
 
             internal var isReforceDownload = false
 
             internal var isWifiRequired = false
 
-            internal var map: Map<String, String>? = null
+            internal var map: Map<String, String> = HashMap()
 
-            internal var threadNum = 0
-
-//            internal var fileSize = BaseDownloadTask.DEFAULE_FILESIZE
+            internal var threadNum = 3
 
             /**
              * 下载url
@@ -141,49 +158,6 @@ class VandaDownloader {
              */
             fun isRename(isRename: Boolean): Builder {
                 this.isRename = isRename
-                return this
-            }
-
-            /**
-             * 是否是视频缓存类型，这个是为视频下载预留的，下载文件的其他业务不需要关心该字段
-             *
-             * @param isVideoCache
-             * @return
-             */
-            fun isVideoCache(isVideoCache: Boolean): Builder {
-                this.isVideoCache = isVideoCache
-                return this
-            }
-
-            /**
-             * @param model
-             * @return
-             */
-            @Deprecated("")
-            fun model(model: Int): Builder {
-                this.model = model
-                return this
-            }
-
-            /**
-             * 是否需要下载文件校验
-             *
-             * @param isVerificationFile
-             * @return
-             */
-            fun isVerificationFile(isVerificationFile: Boolean): Builder {
-                this.isVerificationFile = isVerificationFile
-                return this
-            }
-
-            /**
-             * 文件校验字串，业务方自己要定义格式，然后文件下载完成后处理自己的文件校验逻辑
-             *
-             * @param verificationFileInfo
-             * @return
-             */
-            fun verificationFileInfo(verificationFileInfo: String): Builder {
-                this.verificationFileInfo = verificationFileInfo
                 return this
             }
 
@@ -272,10 +246,8 @@ class VandaDownloader {
             /**
              * @return
              */
-            fun build(): Request? {
-                return if (!check()) {
-                    null
-                } else Request(this)
+            fun build(): Request {
+                return Request(this)
             }
 
             private fun check(): Boolean {

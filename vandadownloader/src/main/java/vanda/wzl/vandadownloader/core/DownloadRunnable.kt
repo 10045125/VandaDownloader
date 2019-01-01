@@ -42,13 +42,12 @@ class DownloadRunnable(
         private val mThreadNumber: Int,
         private val mIsSupportMulti: Boolean,
         private val mExeProgressCalc: ExeProgressCalc,
-        private val mDownloadListener: DownloadListener,
         private val mPath: String,
         private val mDownloadId: Int
 ) : ExeRunnable {
 
     companion object {
-        private const val BUFFER_SIZE = 1024 * 8L
+        private const val BUFFER_SIZE = 1024 * 64L
         private const val MIN_WRITE_BUFFER_SIZE = 1024 * 256
         private const val MIN_PROGRESS_TIME = 1000 //ms
     }
@@ -153,7 +152,7 @@ class DownloadRunnable(
 
             if (complete() || onCancel()) {
                 if (!isChunk() && complete()) {
-                    WriteSeparation.alreadyComplete(mSeparationChunkSize, mTotal, mSegmentSize, mDownloadId, mThreadSerialNumber, mUrl, mPath, mExtSize, mIsSupportMulti, mExeProgressCalc, mDownloadListener)
+                    WriteSeparation.alreadyComplete(mSeparationChunkSize, mTotal, mSegmentSize, mDownloadId, mThreadSerialNumber, mUrl, mPath, mExtSize, mIsSupportMulti, mExeProgressCalc)
                 }
                 break
             }
@@ -284,7 +283,6 @@ class DownloadRunnable(
         writeSeparation.status(status)
         writeSeparation.threadId(threadId)
         writeSeparation.exeProgressCalc(mExeProgressCalc)
-        writeSeparation.downloadListener(mDownloadListener)
         writeSeparation.segment(mSegmentSize)
         writeSeparation.extSize(mExtSize)
         writeSeparation.url(mUrl)

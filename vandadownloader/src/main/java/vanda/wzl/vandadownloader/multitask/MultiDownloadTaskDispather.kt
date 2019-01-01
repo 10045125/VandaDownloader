@@ -16,7 +16,6 @@
 
 package vanda.wzl.vandadownloader.multitask
 
-import vanda.wzl.vandadownloader.core.DownloadListener
 import vanda.wzl.vandadownloader.core.DownloadTaskSchedule
 import vanda.wzl.vandadownloader.core.database.RemarkPointSqlImpl
 import vanda.wzl.vandadownloader.core.util.DownloadUtils
@@ -25,13 +24,13 @@ import java.io.File
 class MultiDownloadTaskDispather : TaskDispatherAttribute {
 
     private var mDownloadTaskPool: DownloadTaskPool = DownloadTaskPool(3)
+    private val mRemarkPointSqlImpl = RemarkPointSqlImpl()
 
     private var mDownloadTaskSchedule: DownloadTaskSchedule? = null
 
-
-    override fun start(url: String, listener: DownloadListener, threadNum: Int, path: String, pathAsDirectory: Boolean, callbackProgressTimes: Int, callbackProgressMinIntervalMillis: Int, autoRetryTimes: Int, forceReDownload: Boolean, header: Map<String, String>, isWifiRequired: Boolean, isGroup: Boolean, postBody: String, fileSize: Long, updateUrl: String) {
+    override fun start(url: String, threadNum: Int, path: String, callbackProgressTimes: Int, callbackProgressMinIntervalMillis: Int, autoRetryTimes: Int, forceReDownload: Boolean, header: Map<String, String>, isWifiRequired: Boolean,  postBody: String) {
         if (!isDownloading(url, path)) {
-            mDownloadTaskSchedule = DownloadTaskSchedule(threadNum, mDownloadTaskPool, url, listener, path)
+            mDownloadTaskSchedule = DownloadTaskSchedule(threadNum, mDownloadTaskPool, url, path)
             mDownloadTaskPool.execTask(mDownloadTaskSchedule!!)
         }
     }
@@ -49,15 +48,15 @@ class MultiDownloadTaskDispather : TaskDispatherAttribute {
     }
 
     override fun getStatus(downloadId: Int): Int {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+       return mRemarkPointSqlImpl.remarkPointSqlEntry(downloadId).status
     }
 
     override fun getSofar(downloadId: Int): Long {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return mRemarkPointSqlImpl.remarkPointSqlEntry(downloadId).sofar
     }
 
     override fun getTotal(downloadId: Int): Long {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return mRemarkPointSqlImpl.remarkPointSqlEntry(downloadId).total
     }
 
     override fun isIdle(): Boolean {
@@ -70,15 +69,13 @@ class MultiDownloadTaskDispather : TaskDispatherAttribute {
 
 
     fun clean(downloadId: Int) {
-        val remarkPointSqlImpl = RemarkPointSqlImpl()
-        remarkPointSqlImpl.delete(downloadId)
-        remarkPointSqlImpl.deleteThreadInfo(downloadId)
+        mRemarkPointSqlImpl.delete(downloadId)
+        mRemarkPointSqlImpl.deleteThreadInfo(downloadId)
 
     }
 
     fun deletefile() {
-        val remarkPointSqlImpl = RemarkPointSqlImpl()
-        val list = remarkPointSqlImpl.remarkPointSqlEntrys()
+        val list = mRemarkPointSqlImpl.remarkPointSqlEntrys()
         for (remarkPointEntry in list) {
             val file = File(remarkPointEntry.path)
             if (file.exists()) {

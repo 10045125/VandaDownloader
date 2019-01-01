@@ -16,10 +16,9 @@
 
 package vanda.wzl.vandadownloader.multitask
 
-import vanda.wzl.vandadownloader.core.DownloadListener
 
 interface TaskDispatherAttribute {
-    fun start(url: String, listener: DownloadListener, threadNum: Int, path: String, pathAsDirectory: Boolean, callbackProgressTimes: Int, callbackProgressMinIntervalMillis: Int, autoRetryTimes: Int, forceReDownload: Boolean, header: Map<String, String>, isWifiRequired: Boolean, isGroup: Boolean, postBody: String, fileSize: Long, updateUrl: String)
+    fun start(url: String, threadNum: Int, path: String, callbackProgressTimes: Int, callbackProgressMinIntervalMillis: Int, autoRetryTimes: Int, forceReDownload: Boolean, header: Map<String, String>, isWifiRequired: Boolean,  postBody: String)
     fun pause(downloadId: Int)
     fun isDownloading(downloadId: Int): Boolean
     fun isDownloading(url: String, path: String): Boolean

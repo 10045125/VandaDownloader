@@ -89,4 +89,8 @@ object AutoAdjustThreadPool {
         }
         return executor?.submit(task)
     }
+
+    fun remove(task: Runnable) {
+        executor?.remove(task)
+    }
 }

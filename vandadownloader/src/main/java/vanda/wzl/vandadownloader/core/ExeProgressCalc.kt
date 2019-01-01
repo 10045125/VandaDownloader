@@ -17,6 +17,7 @@
 package vanda.wzl.vandadownloader.core
 
 import vanda.wzl.vandadownloader.core.database.RemarkPointSql
+import vanda.wzl.vandadownloader.core.progress.ProgressData
 
 interface ExeProgressCalc : RemarkPointSql {
     fun exeProgressCalc(): Long
@@ -25,4 +26,5 @@ interface ExeProgressCalc : RemarkPointSql {
     fun sofar(curThreadId: Int): Long
     fun pauseComplete(curThreadId: Int)
     fun allPauseComplete(): Boolean
+    fun proProgressData(progressData: ProgressData)
 }

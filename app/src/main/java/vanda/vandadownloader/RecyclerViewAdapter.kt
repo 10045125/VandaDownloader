@@ -14,7 +14,7 @@ class RecyclerViewAdapter : RecyclerView.Adapter<RecyclerViewAdapter.MyViewHolde
     override fun onBindViewHolder(p0: MyViewHolder, p1: Int) {
         p0.item?.title(list[p1].title)
         p0.item?.speed(list[p1].speed)
-        p0.item?.progress(list[p1].progress.toFloat())
+        p0.item?.progress(list[p1].progress)
     }
 
     override fun onCreateViewHolder(p0: ViewGroup, p1: Int): RecyclerViewAdapter.MyViewHolder {

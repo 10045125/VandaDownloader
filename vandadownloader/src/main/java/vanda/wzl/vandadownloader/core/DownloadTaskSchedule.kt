@@ -19,8 +19,10 @@ package vanda.wzl.vandadownloader.core
 import android.util.Log
 import quarkokio.Segment
 import quarkokio.SegmentPool
+import vanda.wzl.vandadownloader.MainHandler
 import vanda.wzl.vandadownloader.core.database.RemarkPointSqlEntry
 import vanda.wzl.vandadownloader.core.net.ProviderNetFileTypeImpl
+import vanda.wzl.vandadownloader.core.progress.ProgressData
 import vanda.wzl.vandadownloader.core.status.OnStatus
 import vanda.wzl.vandadownloader.core.threadpool.AutoAdjustThreadPool
 import vanda.wzl.vandadownloader.core.util.DownloadUtils
@@ -28,8 +30,7 @@ import java.io.File
 import java.io.InputStream
 import java.util.concurrent.ConcurrentHashMap
 
-class DownloadTaskSchedule(threadNum: Int, private val mDownloadTaskStatus: DownloadTaskStatus, url: String, val mListener: DownloadListener, path: String) : AbstractDownloadTaskSchedule(), DownloadTaskAttribute {
-
+class DownloadTaskSchedule(threadNum: Int, private val mDownloadTaskStatus: DownloadTaskStatus, url: String, path: String) : AbstractDownloadTaskSchedule(), DownloadTaskAttribute {
 
     companion object {
         const val SEEK_SIZE = 3
@@ -68,7 +69,7 @@ class DownloadTaskSchedule(threadNum: Int, private val mDownloadTaskStatus: Down
 
     override fun start() {
         AutoAdjustThreadPool.execute(Runnable {
-            startAync(mUrl, mListener)
+            startAync(mUrl)
         })
     }
 
@@ -114,7 +115,7 @@ class DownloadTaskSchedule(threadNum: Int, private val mDownloadTaskStatus: Down
         }
     }
 
-    private fun exeTask(threadNum: Int, url: String, sofar: Long, segmentSize: Long, exSize: Long, inputStream: InputStream, downloadListener: DownloadListener) {
+    private fun exeTask(threadNum: Int, url: String, sofar: Long, segmentSize: Long, exSize: Long, inputStream: InputStream) {
         val thread = threadNum - 1
         for (i in 0..thread) {
 
@@ -129,7 +130,6 @@ class DownloadTaskSchedule(threadNum: Int, private val mDownloadTaskStatus: Down
                     mThreadNum,
                     mIsSupportMulti,
                     this,
-                    downloadListener,
                     mPath,
                     mDownloadId)
 
@@ -141,7 +141,7 @@ class DownloadTaskSchedule(threadNum: Int, private val mDownloadTaskStatus: Down
         }
     }
 
-    private fun startAync(url: String, downloadListener: DownloadListener) {
+    private fun startAync(url: String) {
 
         mList.clear()
         createFile()
@@ -157,7 +157,7 @@ class DownloadTaskSchedule(threadNum: Int, private val mDownloadTaskStatus: Down
 
             Log.i("vanda", "mFileSize = $mFileSize exSize = $exSize  segmentSize = $segmentSize")
 
-            exeTask(threadNum, url, 0, segmentSize, exSize, inputStream, downloadListener)
+            exeTask(threadNum, url, 0, segmentSize, exSize, inputStream)
         } else {
             mThreadNum = threadInfos.size
             mIsSupportMulti = remarkPointSqlEntry(mDownloadId).supportMultiThread()
@@ -173,7 +173,6 @@ class DownloadTaskSchedule(threadNum: Int, private val mDownloadTaskStatus: Down
                         threadInfos.size,
                         mIsSupportMulti,
                         this,
-                        downloadListener,
                         mPath,
                         threadinfo.downloadFileId)
 
@@ -240,5 +239,97 @@ class DownloadTaskSchedule(threadNum: Int, private val mDownloadTaskStatus: Down
             mDownloadTaskStatus.pauseComplete(mDownloadId)
         }
         return allPauseComplete
+    }
+
+    override fun proProgressData(progressData: ProgressData) {
+        if (progressData.status == OnStatus.COMPLETE || progressData.status == OnStatus.PAUSE) {
+            AutoAdjustThreadPool.execute(ProProgressDataRunnable(progressData))
+        } else {
+            mRunnable.progressData = progressData
+            AutoAdjustThreadPool.remove(mRunnable)
+            AutoAdjustThreadPool.execute(mRunnable)
+        }
+    }
+
+    private val mRunnable = ProProgressDataRunnable(null)
+
+    private class ProProgressDataRunnable(var progressData: ProgressData?) : Runnable {
+        override fun run() {
+            progressData?.let { progressData(progressData!!) }
+        }
+
+        internal fun progressData(progressData: ProgressData) {
+            val sofar = progressData.exeProgressCalc?.let { progressData.exeProgressCalc!!.exeProgressCalc() }
+                    ?: -1
+            val speed = progressData.exeProgressCalc?.speedIncrement()
+            val percent = sofar.toFloat() / progressData.total.toFloat()
+
+            progressData.sofar = sofar
+            progressData.speed = speed?.let { speed } ?: 0
+            progressData.percent = percent
+
+            when (progressData.status) {
+                vanda.wzl.vandadownloader.core.status.OnStatus.PENGING -> {
+                    progressData.recycle()
+                }
+
+                vanda.wzl.vandadownloader.core.status.OnStatus.START -> {
+                    progressData.recycle()
+                }
+
+                vanda.wzl.vandadownloader.core.status.OnStatus.CONTECT -> {
+                    progressData.recycle()
+                }
+
+                vanda.wzl.vandadownloader.core.status.OnStatus.PROGRESS -> {
+                    Log.d("vanda", "id = ${progressData.id} sofarChild = ${progressData.sofarChild} segment = ${progressData.totalChild} totalProgress = ${progressData.sofar}  percent = ${progressData.percent} percentChild = ${progressData.percentChild} speed = ${progressData.speed} speedChild = ${progressData.speedChild}  threadId = ${progressData.threadId}")
+                    progressData.exeProgressCalc?.update(progressData.fillingRemarkMultiThreadPointSqlEntry())
+                    progressData.exeProgressCalc?.update(progressData.fillingRemarkPointSqlEntry())
+                    MainHandler.syncProgressDataToMain(progressData)
+                }
+
+                vanda.wzl.vandadownloader.core.status.OnStatus.COMPLETE -> {
+                    val allComplete = progressData.exeProgressCalc?.allComplete()
+                    Log.d("vanda", "sofarChild = ${progressData.sofarChild} segment = ${progressData.totalChild} percent = ${progressData.percent} percentChild = ${progressData.percentChild} threadId = ${progressData.threadId} complete, allComplete = $allComplete")
+
+                    progressData.exeProgressCalc?.update(progressData.fillingRemarkMultiThreadPointSqlEntry())
+                    progressData.exeProgressCalc?.update(progressData.fillingRemarkPointSqlEntry())
+
+                    if (allComplete!!) {
+                        progressData.allComplete = true
+                        progressData.exeProgressCalc?.deleteThreadInfo(progressData.id)
+                    } else {
+                        progressData.status = OnStatus.PROGRESS
+                    }
+                    MainHandler.syncProgressDataToMain(progressData)
+                }
+
+                vanda.wzl.vandadownloader.core.status.OnStatus.PAUSE -> {
+
+                    Log.d("vanda", "sofarChild = ${progressData.sofarChild} segment = ${progressData.totalChild} percent = ${progressData.percent} percentChild = ${progressData.percentChild} threadId = ${progressData.threadId} pause")
+
+                    progressData.exeProgressCalc?.update(progressData.fillingRemarkMultiThreadPointSqlEntry())
+                    progressData.exeProgressCalc?.update(progressData.fillingRemarkPointSqlEntry())
+
+                    progressData.exeProgressCalc?.pauseComplete(progressData.threadId)
+                    val allPauseComplete = progressData.exeProgressCalc?.allPauseComplete()
+                    Log.d("vanda", "sofarChild = ${progressData.sofarChild} segment = ${progressData.totalChild} percent = ${progressData.percent} percentChild = ${progressData.percentChild} threadId = ${progressData.threadId} pause, allPauseComplete = $allPauseComplete")
+                    if (allPauseComplete!!) {
+                        MainHandler.syncProgressDataToMain(progressData)
+                    } else {
+                        progressData.recycle()
+                    }
+                }
+
+                vanda.wzl.vandadownloader.core.status.OnStatus.ERROR -> {
+                    progressData.recycle()
+                }
+
+                vanda.wzl.vandadownloader.core.status.OnStatus.RETRY -> {
+                    progressData.recycle()
+                }
+            }
+        }
+
     }
 }
