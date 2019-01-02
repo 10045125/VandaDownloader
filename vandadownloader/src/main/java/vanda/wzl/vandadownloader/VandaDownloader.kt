@@ -17,6 +17,8 @@
 package vanda.wzl.vandadownloader
 
 import android.text.TextUtils
+import quarkokio.Segment
+import quarkokio.SegmentPool
 import vanda.wzl.vandadownloader.core.DownloadContext
 import vanda.wzl.vandadownloader.core.util.DownloadUtils
 import vanda.wzl.vandadownloader.core.util.MimeUtils
@@ -27,6 +29,11 @@ import java.io.File
 class VandaDownloader {
 
     companion object {
+
+        init {
+            SegmentPool.MAX_SIZE = 1024 * 1024
+            Segment.SIZE = 1024 * 64
+        }
 
         private val mMultiDownloadTaskDispather = MultiDownloadTaskDispather()
 

@@ -53,6 +53,12 @@ class MainActivity : AppCompatActivity() {
     private var mThreadNum = 3
     private var mIsStart = false
 
+    val path_weixin = Environment.getExternalStorageDirectory().absolutePath + "/weixin_.apk"
+    val path_wangzhe = Environment.getExternalStorageDirectory().absolutePath + "/wangzherongyao.apk"
+    val path_uc = Environment.getExternalStorageDirectory().absolutePath + "/uc.apk"
+    val path_qq = Environment.getExternalStorageDirectory().absolutePath + "/qq.apk"
+    val path_taobao = Environment.getExternalStorageDirectory().absolutePath + "/taobao.apk"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_breadcrumbs)
@@ -136,47 +142,47 @@ class MainActivity : AppCompatActivity() {
         VandaDownloader.pause(DownloadUtils.generateId(url_taobao, path_taobao))
     }
 
-    val path_weixin = Environment.getExternalStorageDirectory().absolutePath + "/weixin_.apk"
-    val path_wangzhe = Environment.getExternalStorageDirectory().absolutePath + "/wangzherongyao.apk"
-    val path_uc = Environment.getExternalStorageDirectory().absolutePath + "/uc.apk"
-    val path_qq = Environment.getExternalStorageDirectory().absolutePath + "/qq.apk"
-    val path_taobao = Environment.getExternalStorageDirectory().absolutePath + "/taobao.apk"
-
     private fun testDownload() {
+
         val request = VandaDownloader.Request.Builder()
                 .url(url_wangzhe)
                 .path(path_wangzhe)
-                .threadNum(3)
+                .threadNum(mThreadNum)
                 .build()
 
-        val mDownloadTask = VandaDownloader.createDownloadTask(request).addOnStateChangeListener(object : DownloadListener {
-            @SuppressLint("SetTextI18n")
+        VandaDownloader.createDownloadTask(request).addOnStateChangeListener(object : DownloadListener {
+
             override fun onProgress(sofar: Long, sofarChild: Long, total: Long, totalChild: Long, percent: Float, percentChild: Float, speed: Long, speedChild: Long, threadId: Int) {
-                breadcrumbsView!!.nextStep(threadId, java.lang.Float.valueOf(percentChild))
-                mTextViewProgress!!.text = String.format("%s/%s", SpeedUtils.formatSize(sofar), SpeedUtils.formatSize(total))
-                mTextViewSpeed!!.text = if (percent < 1f) String.format("%s/s", calcSpeed(speed)) else "complete"
-                mTextViewTime!!.text = "${(sofar * 100 / total).toInt()}%"
-
-                val itemData = mAdapter!!.getItemData(threadId)
-                itemData.title = "Segment$threadId (${SpeedUtils.formatSize(threadId * totalChild)} ~ ${SpeedUtils.formatSize((threadId + 1) * totalChild)})"
-                itemData.progress = percentChild
-                itemData.speed = if (percentChild < 1f) String.format("%s/s", calcSpeed(speedChild)) else "complete"
-
-                mAdapter!!.notifyItemChanged(threadId)
+                showInfo(sofar, sofarChild, total, totalChild, percent, percentChild, speed, speedChild, threadId)
             }
 
             override fun onComplete() {
-//            activity.mIsStart = false
+                Log.i("vanda", "complete")
             }
 
             override fun onPause() {
-                Log.i("vanda", "onPause complete")
-//            activity.mIsStart = false
+                Log.i("vanda", "pause")
             }
 
-        })
+        }).start()
 
-        mDownloadTask.start()
+    }
+
+
+
+
+    @SuppressLint("SetTextI18n")
+    private fun showInfo(sofar: Long, sofarChild: Long, total: Long, totalChild: Long, percent: Float, percentChild: Float, speed: Long, speedChild: Long, threadId: Int) {
+        breadcrumbsView!!.nextStep(threadId, java.lang.Float.valueOf(percentChild))
+        mTextViewProgress!!.text = String.format("%s/%s", SpeedUtils.formatSize(sofar), SpeedUtils.formatSize(total))
+        mTextViewSpeed!!.text = if (percent < 1f) String.format("%s/s", calcSpeed(speed)) else "complete"
+        mTextViewTime!!.text = "${(sofar * 100 / total).toInt()}%"
+
+        val itemData = mAdapter!!.getItemData(threadId)
+        itemData.title = "Segment$threadId (${SpeedUtils.formatSize(threadId * totalChild)} ~ ${SpeedUtils.formatSize((threadId + 1) * totalChild)})"
+        itemData.progress = percentChild
+        itemData.speed = if (percentChild < 1f) String.format("%s/s", calcSpeed(speedChild)) else "complete"
+        mAdapter!!.notifyItemChanged(threadId)
     }
 
     private fun initRecyclerView() {

@@ -68,7 +68,7 @@ class ProgressData {
     private fun reset() {
         id = -1
 
-        sofar = -1
+        sofar = 0
         sofarChild = -1
         total = -1
         totalChild = 0

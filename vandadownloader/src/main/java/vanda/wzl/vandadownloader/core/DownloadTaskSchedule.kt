@@ -17,11 +17,10 @@
 package vanda.wzl.vandadownloader.core
 
 import android.util.Log
-import quarkokio.Segment
-import quarkokio.SegmentPool
 import vanda.wzl.vandadownloader.MainHandler
 import vanda.wzl.vandadownloader.core.database.RemarkPointSqlEntry
 import vanda.wzl.vandadownloader.core.net.ProviderNetFileTypeImpl
+import vanda.wzl.vandadownloader.core.progress.GlobalSingleThreadHandleProgressData
 import vanda.wzl.vandadownloader.core.progress.ProgressData
 import vanda.wzl.vandadownloader.core.status.OnStatus
 import vanda.wzl.vandadownloader.core.threadpool.AutoAdjustThreadPool
@@ -52,8 +51,6 @@ class DownloadTaskSchedule(threadNum: Int, private val mDownloadTaskStatus: Down
     private var mUrl: String = ""
 
     init {
-        SegmentPool.MAX_SIZE = 1024 * 1024 * 3
-        Segment.SIZE = 1024 * 256
         mUrl = url
         mPath = path
         mDownloadId = DownloadUtils.generateId(url, mPath)
@@ -243,11 +240,11 @@ class DownloadTaskSchedule(threadNum: Int, private val mDownloadTaskStatus: Down
 
     override fun proProgressData(progressData: ProgressData) {
         if (progressData.status == OnStatus.COMPLETE || progressData.status == OnStatus.PAUSE) {
-            AutoAdjustThreadPool.execute(ProProgressDataRunnable(progressData))
+            GlobalSingleThreadHandleProgressData.execute(ProProgressDataRunnable(progressData))
         } else {
             mRunnable.progressData = progressData
-            AutoAdjustThreadPool.remove(mRunnable)
-            AutoAdjustThreadPool.execute(mRunnable)
+            GlobalSingleThreadHandleProgressData.remove(mRunnable)
+            GlobalSingleThreadHandleProgressData.execute(mRunnable)
         }
     }
 
@@ -259,8 +256,11 @@ class DownloadTaskSchedule(threadNum: Int, private val mDownloadTaskStatus: Down
         }
 
         internal fun progressData(progressData: ProgressData) {
-            val sofar = progressData.exeProgressCalc?.let { progressData.exeProgressCalc!!.exeProgressCalc() }
-                    ?: -1
+            if (progressData.exeProgressCalc == null) {
+                Log.e("vanda", "exeProgressCalc is null")
+            }
+
+            val sofar = progressData.exeProgressCalc!!.exeProgressCalc()
             val speed = progressData.exeProgressCalc?.speedIncrement()
             val percent = sofar.toFloat() / progressData.total.toFloat()
 

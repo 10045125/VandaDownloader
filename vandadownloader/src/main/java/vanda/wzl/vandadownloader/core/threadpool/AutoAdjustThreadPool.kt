@@ -23,7 +23,7 @@ object AutoAdjustThreadPool {
     /**
      * 队列阈值，超过此值则扩大线程池
      */
-    private const val MAX_QUEUE_SIZE = 0
+    private const val MAX_QUEUE_SIZE = 3
 
     /**
      * 每次扩容自动增加线程数
@@ -33,7 +33,7 @@ object AutoAdjustThreadPool {
     /**
      * 监控积压时间频率
      */
-    private const val MONITOR_DELAY_TIME = 1L
+    private const val MONITOR_DELAY_TIME = 5L
 
     private var scheduledExecutorService: ScheduledExecutorService? = null
 
