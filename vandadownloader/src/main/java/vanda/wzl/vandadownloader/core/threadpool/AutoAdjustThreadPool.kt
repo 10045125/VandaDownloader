@@ -23,12 +23,12 @@ object AutoAdjustThreadPool {
     /**
      * 队列阈值，超过此值则扩大线程池
      */
-    private const val MAX_QUEUE_SIZE = 9
+    private const val MAX_QUEUE_SIZE = 3
 
     /**
      * 每次扩容自动增加线程数
      */
-    private const val PER_ADD_THREAD = 3
+    private const val PER_ADD_THREAD = 9
 
     /**
      * 监控积压时间频率
