@@ -22,6 +22,7 @@ import quarkokio.SegmentPool
 import vanda.wzl.vandadownloader.core.DownloadContext
 import vanda.wzl.vandadownloader.core.util.DownloadUtils
 import vanda.wzl.vandadownloader.core.util.MimeUtils
+import vanda.wzl.vandadownloader.multitask.DownloadListener
 import vanda.wzl.vandadownloader.multitask.DownloadTask
 import vanda.wzl.vandadownloader.multitask.MultiDownloadTaskDispather
 import java.io.File
@@ -31,8 +32,8 @@ class VandaDownloader {
     companion object {
 
         init {
-            SegmentPool.MAX_SIZE = 1024 * 1024
-            Segment.SIZE = 1024 * 64
+            SegmentPool.MAX_SIZE = 1024 * 1024 * 2
+            Segment.SIZE = 1024 * 256
         }
 
         private val mMultiDownloadTaskDispather = MultiDownloadTaskDispather()
@@ -67,6 +68,14 @@ class VandaDownloader {
 
         fun deletefile() {
             mMultiDownloadTaskDispather.deletefile()
+        }
+
+        fun addGlobalDownloadListener(mDownloadListener: DownloadListener) {
+            MainHandler.addGlobalDownloadListener(mDownloadListener)
+        }
+
+        fun removeGlobalDownloadListener(mDownloadListener: DownloadListener) {
+            MainHandler.removeGlobalDownloadListener(mDownloadListener)
         }
     }
 

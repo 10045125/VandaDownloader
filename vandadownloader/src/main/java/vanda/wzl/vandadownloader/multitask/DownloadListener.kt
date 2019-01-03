@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 YY Inc
+ * Copyright (c) 2019 YY Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package vanda.wzl.vandadownloader.core
+package vanda.wzl.vandadownloader.multitask
 
 interface DownloadListener {
     fun onProgress(sofar: Long, sofarChild: Long, total: Long, totalChild: Long, percent: Float, percentChild: Float, speed: Long, speedChild: Long, threadId: Int)
 
-    fun onComplete()
+    fun onComplete(downloadId: Int, total: Long)
 
-    fun onPause()
+    fun onPause(downloadId: Int, sofar: Long, total: Long)
 }

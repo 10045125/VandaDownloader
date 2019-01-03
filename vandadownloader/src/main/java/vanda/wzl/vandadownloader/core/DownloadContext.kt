@@ -24,6 +24,7 @@ class DownloadContext  private constructor() {
 
     private var mContext: Context? = null
     private var mDefaultPath: String = ""
+    private var mNeedLog = true
 
     private object SingleHolder {
         @SuppressLint("StaticFieldLeak")
@@ -42,6 +43,10 @@ class DownloadContext  private constructor() {
 
         fun getDefaultSaveRootPath(): String {
             return SingleHolder.INSTANCE.mDefaultPath
+        }
+
+        fun setEnableLog(enableLog: Boolean) {
+            SingleHolder.INSTANCE.mNeedLog = enableLog
         }
     }
 

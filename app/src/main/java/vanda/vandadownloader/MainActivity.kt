@@ -18,11 +18,9 @@ import android.widget.SeekBar
 import android.widget.TextView
 import io.victoralbertos.breadcumbs_view.BreadcrumbsView
 import vanda.wzl.vandadownloader.VandaDownloader
-import vanda.wzl.vandadownloader.core.DownloadListener
+import vanda.wzl.vandadownloader.multitask.DownloadListener
 import vanda.wzl.vandadownloader.core.util.DownloadUtils
 import vanda.wzl.vandadownloader.core.util.SpeedUtils
-import vanda.wzl.vandadownloader.multitask.DownloadTask
-import vanda.wzl.vandadownloader.multitask.MultiDownloadTaskDispather
 
 class MainActivity : AppCompatActivity() {
 
@@ -144,31 +142,31 @@ class MainActivity : AppCompatActivity() {
 
     private fun testDownload() {
 
+        VandaDownloader.addGlobalDownloadListener(object : DownloadListener {
+
+            override fun onProgress(sofar: Long, sofarChild: Long, total: Long, totalChild: Long, percent: Float, percentChild: Float, speed: Long, speedChild: Long, threadId: Int) {
+                showInfo(sofar, sofarChild, total, totalChild, percent, percentChild, speed, speedChild, threadId)
+            }
+
+            override fun onComplete(downloadId: Int, total: Long) {
+            }
+
+            override fun onPause(downloadId: Int, sofar: Long, total: Long) {
+            }
+
+        })
+
         val request = VandaDownloader.Request.Builder()
                 .url(url_wangzhe)
                 .path(path_wangzhe)
                 .threadNum(mThreadNum)
                 .build()
 
-        VandaDownloader.createDownloadTask(request).addOnStateChangeListener(object : DownloadListener {
-
-            override fun onProgress(sofar: Long, sofarChild: Long, total: Long, totalChild: Long, percent: Float, percentChild: Float, speed: Long, speedChild: Long, threadId: Int) {
-                showInfo(sofar, sofarChild, total, totalChild, percent, percentChild, speed, speedChild, threadId)
-            }
-
-            override fun onComplete() {
-                Log.i("vanda", "complete")
-            }
-
-            override fun onPause() {
-                Log.i("vanda", "pause")
-            }
-
-        }).start()
+        VandaDownloader.createDownloadTask(request)
+//                .addOnStateChangeListener()
+                .start()
 
     }
-
-
 
 
     @SuppressLint("SetTextI18n")

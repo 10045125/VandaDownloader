@@ -16,11 +16,9 @@
 
 package vanda.wzl.vandadownloader.core.progress
 
-import vanda.wzl.vandadownloader.core.DownloadListener
 import vanda.wzl.vandadownloader.core.ExeProgressCalc
 import vanda.wzl.vandadownloader.core.database.RemarkMultiThreadPointSqlEntry
 import vanda.wzl.vandadownloader.core.database.RemarkPointSqlEntry
-import vanda.wzl.vandadownloader.core.status.OnStatus
 
 class ProgressData {
     private var mNext: ProgressData? = null
@@ -50,7 +48,6 @@ class ProgressData {
     var status: Int = 0
 
     var exeProgressCalc: ExeProgressCalc? = null
-    var downloadListener: DownloadListener? = null
 
     private var remarkPointSqlEntry: RemarkPointSqlEntry = RemarkPointSqlEntry()
     private var remarkMultiThreadPointSqlEntry: RemarkMultiThreadPointSqlEntry = RemarkMultiThreadPointSqlEntry()
@@ -84,7 +81,6 @@ class ProgressData {
         isInit = false
 
         status = -1
-        downloadListener = null
 
         remarkPointSqlEntry.reset()
         remarkMultiThreadPointSqlEntry.reset()

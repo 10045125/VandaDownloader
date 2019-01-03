@@ -21,15 +21,17 @@ import android.os.Looper
 import android.os.Message
 import android.util.Log
 import android.util.SparseArray
-import vanda.wzl.vandadownloader.core.DownloadListener
+import vanda.wzl.vandadownloader.multitask.DownloadListener
 import vanda.wzl.vandadownloader.core.progress.ProgressData
 import vanda.wzl.vandadownloader.core.status.OnStatus
 import vanda.wzl.vandadownloader.multitask.DownloadTask
+import java.util.concurrent.ConcurrentHashMap
 
 class MainHandler {
 
     private val mHandler: Handler
-    private val downloadListenerSparseArray: SparseArray<DownloadListener> = SparseArray()
+    private val mDdownloadListenerSparseArray: SparseArray<DownloadListener> = SparseArray()
+    private val mDownloadGlobalListener = ConcurrentHashMap<Int, DownloadListener>()
 
     private object SingleHolder {
         internal val INSTANCE = MainHandler()
@@ -45,7 +47,17 @@ class MainHandler {
 
         @Synchronized
         internal fun remarkDownloadListener(downloadTask: DownloadTask) {
-            SingleHolder.INSTANCE.downloadListenerSparseArray.put(downloadTask.getId(), downloadTask.getOnStateChangeListener())
+            downloadTask.getOnStateChangeListener()?.let { SingleHolder.INSTANCE.mDdownloadListenerSparseArray.put(downloadTask.getId(), downloadTask.getOnStateChangeListener()) }
+        }
+
+        @Synchronized
+        internal fun addGlobalDownloadListener(mDownloadListener: DownloadListener?) {
+            mDownloadListener?.let { SingleHolder.INSTANCE.mDownloadGlobalListener[mDownloadListener.hashCode()] = mDownloadListener }
+        }
+
+        @Synchronized
+        internal fun removeGlobalDownloadListener(mDownloadListener: DownloadListener?) {
+            mDownloadListener?.let { SingleHolder.INSTANCE.mDownloadGlobalListener.remove(mDownloadListener.hashCode(), mDownloadListener) }
         }
 
         fun syncProgressDataToMain(progressData: ProgressData) {
@@ -92,22 +104,30 @@ class MainHandler {
         }
 
         private fun getListener(progressData: ProgressData): DownloadListener? {
-            return SingleHolder.INSTANCE.downloadListenerSparseArray.get(progressData.id)
+            return SingleHolder.INSTANCE.mDdownloadListenerSparseArray.get(progressData.id)
         }
 
         private fun removeListener(progressData: ProgressData) {
-            SingleHolder.INSTANCE.downloadListenerSparseArray.remove(progressData.id)
+            SingleHolder.INSTANCE.mDdownloadListenerSparseArray.remove(progressData.id)
         }
 
         private fun pause(progressData: ProgressData) {
-            getListener(progressData)?.onPause()
+            getListener(progressData)?.onPause(progressData.id, progressData.sofar, progressData.total)
+                    ?: SingleHolder.INSTANCE.mDownloadGlobalListener.forEach { listener ->
+                        listener.value.onPause(progressData.id, progressData.sofar, progressData.total)
+                    }
             removeListener(progressData)
-            Log.e("vanda", "size = ${SingleHolder.INSTANCE.downloadListenerSparseArray.size()}")
+            Log.e("vanda", "size = ${SingleHolder.INSTANCE.mDdownloadListenerSparseArray.size()}")
         }
 
         private fun progress(progressData: ProgressData) {
+            getListener(progressData)?.let { progress(it, progressData) }
+                    ?: globalProgress(progressData)
+        }
+
+        private fun progress(listener: DownloadListener?, progressData: ProgressData) {
             Log.e("vanda", "id = ${progressData.id}, threadId = ${progressData.threadId}, percentChild = ${progressData.percentChild} sofarChild = ${progressData.sofarChild} totalChild = ${progressData.totalChild} sofar = ${progressData.sofar}, total = ${progressData.total} isInit = ${progressData.isInit}")
-             getListener(progressData)?.onProgress(
+            listener?.onProgress(
                     progressData.sofar,
                     progressData.sofarChild,
                     progressData.total,
@@ -122,9 +142,28 @@ class MainHandler {
 
         private fun complete(progressData: ProgressData) {
             if (progressData.allComplete && progressData.status == OnStatus.COMPLETE) {
-                removeListener(progressData)
-                getListener(progressData)?.onComplete()
-                Log.e("vanda", "size = ${SingleHolder.INSTANCE.downloadListenerSparseArray.size()}")
+                getListener(progressData)?.let { complete(it, progressData) }
+                        ?: globalComplete(progressData)
+            }
+        }
+
+        private fun complete(listener: DownloadListener?, progressData: ProgressData) {
+            if (progressData.allComplete && progressData.status == OnStatus.COMPLETE) {
+                listener?.onComplete(progressData.id, progressData.total)
+                Log.e("vanda", "size = ${SingleHolder.INSTANCE.mDdownloadListenerSparseArray.size()}")
+            }
+        }
+
+
+        private fun globalProgress(progressData: ProgressData) {
+            SingleHolder.INSTANCE.mDownloadGlobalListener.forEach { listener ->
+                progress(listener.value, progressData)
+            }
+        }
+
+        private fun globalComplete(progressData: ProgressData) {
+            SingleHolder.INSTANCE.mDownloadGlobalListener.forEach { listener ->
+                complete(listener.value, progressData)
             }
         }
     }

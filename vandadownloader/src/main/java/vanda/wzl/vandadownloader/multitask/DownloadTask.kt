@@ -16,8 +16,6 @@
 
 package vanda.wzl.vandadownloader.multitask
 
-import vanda.wzl.vandadownloader.core.DownloadListener
-
 abstract class DownloadTask {
     /**
      * 下载ID
