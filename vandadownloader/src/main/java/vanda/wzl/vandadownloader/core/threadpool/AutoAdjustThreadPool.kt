@@ -16,6 +16,7 @@
 
 package vanda.wzl.vandadownloader.core.threadpool
 
+import android.util.Log
 import java.util.concurrent.*
 
 object AutoAdjustThreadPool {
@@ -23,7 +24,7 @@ object AutoAdjustThreadPool {
     /**
      * 队列阈值，超过此值则扩大线程池
      */
-    private const val MAX_QUEUE_SIZE = 3
+    private const val MAX_QUEUE_SIZE = 0
 
     /**
      * 每次扩容自动增加线程数
@@ -43,11 +44,11 @@ object AutoAdjustThreadPool {
 
     fun start() {
         executor = ThreadPoolExecutor(3, Int.MAX_VALUE,
-                60L, TimeUnit.MILLISECONDS,
-                LinkedBlockingQueue())
+            60L, TimeUnit.MILLISECONDS,
+            LinkedBlockingQueue())
         scheduledExecutorService = ScheduledThreadPoolExecutor(3, Executors.defaultThreadFactory())
         scheduledExecutorService?.scheduleWithFixedDelay({
-//            System.out.println("当前线程池状态！$executor")
+            //            System.out.println("当前线程池状态！$executor")
             //当队列大小超过限制，且jvm内存使用率小于80%时扩容，防止无限制扩容
             if (executor!!.queue.size >= MAX_QUEUE_SIZE && executor!!.poolSize < executor!!.maximumPoolSize && getMemoryUsage() < 0.8f) {
 //                System.out.println("线程池扩容！$executor")
@@ -87,6 +88,8 @@ object AutoAdjustThreadPool {
         if (!mIsInit) {
             start()
         }
+        Log.i("vanda", "executor?.poolSize = ${executor?.poolSize}" + "executor?.activeCount = ${executor?.activeCount}")
+        executor?.poolSize
         return executor?.submit(task)
     }
 
